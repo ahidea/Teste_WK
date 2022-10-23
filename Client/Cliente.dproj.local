@@ -1,0 +1,12 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>2022/10/22 09:30:14.000.710,=C:\Users\ahide\OneDrive\Documentos\Embarcadero\Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>2022/10/22 09:32:08.000.417,C:\Users\ahide\OneDrive\Documentos\Embarcadero\Studio\Projects\Teste_WK\Client\uCliente.pas=C:\Users\ahide\OneDrive\Documentos\Embarcadero\Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>2022/10/22 09:32:08.000.417,C:\Users\ahide\OneDrive\Documentos\Embarcadero\Studio\Projects\Teste_WK\Client\uCliente.dfm=C:\Users\ahide\OneDrive\Documentos\Embarcadero\Studio\Projects\Unit1.dfm</Transaction>
+    <Transaction>2022/10/22 09:32:12.000.762,C:\Users\ahide\OneDrive\Documentos\Embarcadero\Studio\Projects\Teste_WK\Client\Cliente.dproj=C:\Users\ahide\OneDrive\Documentos\Embarcadero\Studio\Projects\Project1.dproj</Transaction>
+    <Transaction>2022/10/22 09:32:47.000.938,=C:\Users\ahide\OneDrive\Documentos\Embarcadero\Studio\Projects\Teste_WK\Client\Unit1.pas</Transaction>
+    <Transaction>2022/10/22 09:33:03.000.564,C:\Users\ahide\OneDrive\Documentos\Embarcadero\Studio\Projects\Teste_WK\Client\uDM.pas=C:\Users\ahide\OneDrive\Documentos\Embarcadero\Studio\Projects\Teste_WK\Client\Unit1.pas</Transaction>
+    <Transaction>2022/10/22 09:33:03.000.564,C:\Users\ahide\OneDrive\Documentos\Embarcadero\Studio\Projects\Teste_WK\Client\uDM.dfm=C:\Users\ahide\OneDrive\Documentos\Embarcadero\Studio\Projects\Teste_WK\Client\Unit1.dfm</Transaction>
+  </Transactions>
+</BorlandProject>

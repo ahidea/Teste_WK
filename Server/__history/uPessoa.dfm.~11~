@@ -1,0 +1,93 @@
+object DMPessoa: TDMPessoa
+  Height = 120
+  Width = 260
+  object qryPessoa: TFDQuery
+    Connection = DataModule1.FDConnection1
+    SQL.Strings = (
+      'select *'
+      'from pessoa'
+      'where idpessoa = :idpessoa or coalesce(:idpessoa,0) = 0;')
+    Left = 40
+    Top = 24
+    ParamData = <
+      item
+        Name = 'IDPESSOA'
+        DataType = ftInteger
+        ParamType = ptInput
+        Value = Null
+      end>
+    object qryPessoaidpessoa: TLargeintField
+      FieldName = 'idpessoa'
+      Origin = 'idpessoa'
+      ProviderFlags = [pfInUpdate, pfInWhere, pfInKey]
+    end
+    object qryPessoaflnatureza: TSmallintField
+      FieldName = 'flnatureza'
+      Origin = 'flnatureza'
+    end
+    object qryPessoadsdocumento: TWideStringField
+      FieldName = 'dsdocumento'
+      Origin = 'dsdocumento'
+    end
+    object qryPessoanmprimeiro: TWideStringField
+      FieldName = 'nmprimeiro'
+      Origin = 'nmprimeiro'
+      Size = 100
+    end
+    object qryPessoanmsegundo: TWideStringField
+      FieldName = 'nmsegundo'
+      Origin = 'nmsegundo'
+      Size = 100
+    end
+    object qryPessoadtregistro: TDateField
+      FieldName = 'dtregistro'
+      Origin = 'dtregistro'
+    end
+  end
+  object qryPessoaCep: TFDQuery
+    Connection = DataModule1.FDConnection1
+    SQL.Strings = (
+      'SELECT *'
+      'FROM endereco_integracao'
+      'WHERE idendereco = :idendereco')
+    Left = 128
+    Top = 24
+    ParamData = <
+      item
+        Name = 'IDENDERECO'
+        DataType = ftInteger
+        ParamType = ptInput
+        Value = 8
+      end>
+    object qryPessoaCepidendereco: TLargeintField
+      FieldName = 'idendereco'
+      Origin = 'idendereco'
+      ProviderFlags = [pfInUpdate, pfInWhere, pfInKey]
+    end
+    object qryPessoaCepdsuf: TWideStringField
+      FieldName = 'dsuf'
+      Origin = 'dsuf'
+      Size = 50
+    end
+    object qryPessoaCepnmcidade: TWideStringField
+      FieldName = 'nmcidade'
+      Origin = 'nmcidade'
+      Size = 100
+    end
+    object qryPessoaCepnmbairro: TWideStringField
+      FieldName = 'nmbairro'
+      Origin = 'nmbairro'
+      Size = 50
+    end
+    object qryPessoaCepnmlogradouro: TWideStringField
+      FieldName = 'nmlogradouro'
+      Origin = 'nmlogradouro'
+      Size = 100
+    end
+    object qryPessoaCepdscomplemento: TWideStringField
+      FieldName = 'dscomplemento'
+      Origin = 'dscomplemento'
+      Size = 100
+    end
+  end
+end

@@ -1,0 +1,33 @@
+object DataModule1: TDataModule1
+  OnCreate = DataModuleCreate
+  Height = 315
+  Width = 419
+  object FDGUIxWaitCursor1: TFDGUIxWaitCursor
+    Provider = 'Console'
+    Left = 88
+    Top = 136
+  end
+  object FDPhysPgDriverLink1: TFDPhysPgDriverLink
+    VendorHome = 
+      'C:\Users\ahide\OneDrive\Documentos\Embarcadero\Studio\Projects\T' +
+      'este_WK\Server\Win32\Debug'
+    Left = 88
+    Top = 72
+  end
+  object FDConnection1: TFDConnection
+    Params.Strings = (
+      'Database=postgres'
+      'User_Name=postgres'
+      'Password=sysDBA'
+      'Server=localhost'
+      'DriverID=PG')
+    Connected = True
+    LoginPrompt = False
+    Left = 88
+    Top = 16
+  end
+  object FDStanStorageJSONLink1: TFDStanStorageJSONLink
+    Left = 88
+    Top = 200
+  end
+end

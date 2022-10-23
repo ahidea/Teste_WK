@@ -1,0 +1,195 @@
+
+Teste: 2022-10-19 a 2022-10-22
+
+1. Banco de dados:
+
+ PostgreSQL versão 15
+
+Tabelas criada com script abaixo, utilizando, pgAdmin versão 6.14
+
+------------------------------------------------------------------
+
+-- Table: public.pessoa
+
+-- DROP TABLE IF EXISTS public.pessoa;
+
+CREATE TABLE IF NOT EXISTS public.pessoa
+(	idpessoa bigserial NOT NULL,
+	flnatureza int2 NOT NULL,
+	dsdocumento varchar(20) NOT NULL,
+	nmprimeiro varchar(100) NOT NULL,
+	nmsegundo varchar(100) NOT NULL,
+	dtregistro date NULL,
+	CONSTRAINT pessoa_pk PRIMARY KEY (idpessoa)
+)
+
+ALTER TABLE IF EXISTS public.pessoa OWNER to postgres;
+
+COMMENT ON TABLE public.pessoa IS 'teste WK';
+	
+------------------------------------------------------------------
+
+-- Table: public.endereco
+
+-- DROP TABLE IF EXISTS public.endereco;
+
+CREATE TABLE endereco
+(	idendereco bigserial NOT NULL,
+	idpessoa int8 NOT NULL,
+	dscep varchar(15) NULL,
+	CONSTRAINT endereco_pk PRIMARY KEY (idendereco),
+	CONSTRAINT endereco_fk_pessoa FOREIGN KEY (idpessoa)
+	REFERENCES pessoa(idpessoa) ON DELETE cascade
+);
+CREATE INDEX endereco_idpessoa ON endereco (idpessoa);
+
+ALTER TABLE IF EXISTS public.endereco OWNER to postgres;
+	
+COMMENT ON TABLE public.pessoa IS 'teste WK';
+	
+------------------------------------------------------------------
+
+-- Table: public.endereco_integracao
+
+-- DROP TABLE IF EXISTS public.endereco;
+
+CREATE TABLE endereco_integracao
+(	idendereco bigint NOT NULL,
+	dsuf varchar(50) NULL,
+	nmcidade varchar(100) NULL,
+	nmbairro varchar(50) NULL,
+	nmlogradouro varchar(100) NULL,
+	dscomplemento varchar(100) NULL,
+	CONSTRAINT enderecointegracao_pk PRIMARY KEY (idendereco),
+	CONSTRAINT enderecointegracao_fk_endereco FOREIGN KEY (idendereco)
+	REFERENCES endereco(idendereco) ON DELETE cascade
+);
+
+ALTER TABLE IF EXISTS public.endereco_integracao OWNER to postgres;
+	
+COMMENT ON TABLE public.endereco_integracao IS 'teste WK';
+	
+------------------------------------------------------------------------------------
+
+2. Servidor DataSnap com API Rest
+
+	
+2.1 Endpoint GET: http://localhost:9000/pessoa/id  
+
+Passando o "id" da pessoa, retorna:
+
+{
+    "status": 200,
+    "data": [
+        {
+            "idpessoa": 31,
+            "flnatureza": 1,
+            "dsdocumento": "000.000.1231-23",
+            "nmprimeiro": "Maria",
+            "nmsegundo": "Silva",
+            "dtregistro": "2022-10-21",
+            "dscep": "07092-080",
+            "idendereco": 9,
+            "dsuf": "SP",
+            "nmcidade": "Guarulhos",
+            "nmbairro": "Gopoúva",
+            "nmlogradouro": "Rua Capitão Daniel Guedes",
+            "dscomplemento": ""
+        }
+    ]
+}
+
+Em caso de erro:
+
+{
+    "status": 204,
+    "sucess": false,
+    "message": "not found"
+}
+
+2.2 Endpoint POST: http://localhost:9000/pessoa
+  
+*** Consulta viacep.com.br/ws/_numero_CEP/json, para obter dados do endereço.
+ 
+Passando um json com os dados a cadastrar:
+
+{
+    "flnatureza": 1,
+    "dsdocumento": "000.000.0001-23",
+    "nmprimeiro": "José",
+    "nmsegundo": "Silva",
+    "cep": "07000-00"
+}
+
+Retorna:
+
+{
+    "status": 201,
+    "sucess": true,
+    "idpessoa": 33,
+    "idendereco": 11
+}
+
+Em caso de erro, informa o erro encontrado:
+
+{
+    "status": 400,
+    "sucess": false,
+    "message": "campo 'cep' inválido"
+}
+
+2.3 Endpoint PUT: http://localhost:9000/pessoa
+
+*** Consulta viacep.com.br/ws/_numero_CEP/json, para obter dados do endereço.
+
+Passando um json com os dados para alterar:
+
+{
+    "idpessoa": 123
+    "flnatureza": 1,
+    "dsdocumento": "000.000.0001-23",
+    "nmprimeiro": "José",
+    "nmsegundo": "Silva",
+    "cep": "07092-080"
+}
+
+Retorna:
+
+{
+    "status": 200,
+    "sucess": true
+}
+
+Em caso de erro, informa o erro encontrado:
+
+{
+    "status": 400,
+    "sucess": false,
+    "message": "campo 'cep' inválido"
+}
+
+2.4 Endpoint DELETE: http://localhost:9000/pessoa/id  
+
+passando o "id" da pessoa, retorna:
+
+{
+    "status": 200,
+    "sucess": true,
+    "message": "registro apagado"
+}
+
+
+3. Desktop:
+
+Aplicação que permite:
+
+	- Cadastrar
+	- Alterar
+	- Excluir
+	- Pesquisar, por id
+	
+	- Processamento em Lote de arquivo CSV (ainda não foi testato)
+	
+	- Threads, para atualização em lote (pendente)
+
+
