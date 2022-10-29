@@ -1,0 +1,97 @@
+object DM: TDM
+  Height = 444
+  Width = 708
+  object RESTpessoa: TRESTClient
+    BaseURL = 'http://localhost:9000'
+    Params = <>
+    SynchronizedEvents = False
+    Left = 64
+    Top = 24
+  end
+  object RESTRequestGET_ping: TRESTRequest
+    AssignedValues = [rvConnectTimeout, rvReadTimeout]
+    Client = REST_Pessoa
+    Params = <>
+    Resource = 'ping'
+    Response = RESTResponseGET_ping
+    SynchronizedEvents = False
+    Left = 376
+    Top = 352
+  end
+  object RESTResponseGET_ping: TRESTResponse
+    Left = 520
+    Top = 352
+  end
+  object RESTRequestPUT: TRESTRequest
+    AssignedValues = [rvConnectTimeout, rvReadTimeout]
+    Client = RESTpessoa
+    Method = rmPUT
+    Params = <
+      item
+        Kind = pkREQUESTBODY
+        Name = 'bodyFB9C0610E65F4EDCAF37C47E05141BD6'
+        Value = 
+          '{"idpessoa":32,"flnatureza":1,"dsdocumento":"000.000.0031-23","n' +
+          'mprimeiro":"Allan","nmsegundo":"Silvano","cep":"07092-090"}'
+        ContentTypeStr = 'application/json'
+      end>
+    Resource = 'pessoa'
+    Response = RESTResponsePUT
+    SynchronizedEvents = False
+    Left = 64
+    Top = 224
+  end
+  object RESTResponsePUT: TRESTResponse
+    Left = 176
+    Top = 224
+  end
+  object RESTRequest_GET: TRESTRequest
+    AssignedValues = [rvConnectTimeout, rvReadTimeout]
+    Client = REST_Pessoa
+    Params = <>
+    Resource = 'GET/66'
+    Response = RESTResponse_GET
+    SynchronizedEvents = False
+    Left = 368
+    Top = 24
+  end
+  object RESTResponse_GET: TRESTResponse
+    Left = 480
+    Top = 24
+  end
+  object REST_Pessoa: TRESTClient
+    BaseURL = 'http://localhost:9000/datasnap/rest/TServerMethods'
+    Params = <>
+    SynchronizedEvents = False
+    Left = 264
+    Top = 24
+  end
+  object RESTRequest_POST: TRESTRequest
+    AssignedValues = [rvConnectTimeout, rvReadTimeout]
+    Client = REST_Pessoa
+    Params = <>
+    Resource = 'POST/json'
+    Response = RESTResponse_POST
+    SynchronizedEvents = False
+    Left = 368
+    Top = 88
+  end
+  object RESTResponse_POST: TRESTResponse
+    Left = 488
+    Top = 88
+  end
+  object RESTRequest_DELETE: TRESTRequest
+    AssignedValues = [rvConnectTimeout, rvReadTimeout]
+    Client = REST_Pessoa
+    Params = <>
+    Resource = 'DELETE/66'
+    Response = RESTResponse_DELETE
+    SynchronizedEvents = False
+    Left = 368
+    Top = 152
+  end
+  object RESTResponse_DELETE: TRESTResponse
+    Left = 496
+    Top = 152
+  end
+end

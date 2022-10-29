@@ -1,0 +1,63 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>2022/10/28 19:52:51.000.633,=C:\Users\ahide\OneDrive\Documentos\Embarcadero\Studio\Projects\Teste_WK_2\Server\ServerMethodsUnit1.pas</Transaction>
+    <Transaction>2022/10/28 19:52:51.000.789,=C:\Users\ahide\OneDrive\Documentos\Embarcadero\Studio\Projects\Teste_WK_2\Server\js\serverfunctionexecutor.js</Transaction>
+    <Transaction>2022/10/28 19:52:51.000.902,=C:\Users\ahide\OneDrive\Documentos\Embarcadero\Studio\Projects\Teste_WK_2\Server\js\base64-min.js</Transaction>
+    <Transaction>2022/10/28 19:52:51.000.805,=C:\Users\ahide\OneDrive\Documentos\Embarcadero\Studio\Projects\Teste_WK_2\Server\js\json2.js</Transaction>
+    <Transaction>2022/10/28 19:52:51.000.946,=C:\Users\ahide\OneDrive\Documentos\Embarcadero\Studio\Projects\Teste_WK_2\Server\js\serverfunctionexecutor-min.js</Transaction>
+    <Transaction>2022/10/28 19:52:51.000.693,=C:\Users\ahide\OneDrive\Documentos\Embarcadero\Studio\Projects\Teste_WK_2\Server\WebModuleUnit1.pas</Transaction>
+    <Transaction>2022/10/28 19:52:51.000.499,=C:\Users\ahide\OneDrive\Documentos\Embarcadero\Studio\Projects\Teste_WK_2\Server\FormUnit1.pas</Transaction>
+    <Transaction>2022/10/28 19:52:51.000.774,=C:\Users\ahide\OneDrive\Documentos\Embarcadero\Studio\Projects\Teste_WK_2\Server\js\base64.js</Transaction>
+    <Transaction>2022/10/28 19:52:51.000.922,=C:\Users\ahide\OneDrive\Documentos\Embarcadero\Studio\Projects\Teste_WK_2\Server\js\json2-min.js</Transaction>
+    <Transaction>2022/10/28 19:52:51.000.844,=C:\Users\ahide\OneDrive\Documentos\Embarcadero\Studio\Projects\Teste_WK_2\Server\js\callbackframework.js</Transaction>
+    <Transaction>2022/10/28 19:52:51.000.864,=C:\Users\ahide\OneDrive\Documentos\Embarcadero\Studio\Projects\Teste_WK_2\Server\js\serverfunctions.js</Transaction>
+    <Transaction>2022/10/28 19:52:52.000.215,=C:\Users\ahide\OneDrive\Documentos\Embarcadero\Studio\Projects\Teste_WK_2\Server\templates\serverfunctioninvoker.html</Transaction>
+    <Transaction>2022/10/28 19:52:52.000.114,=C:\Users\ahide\OneDrive\Documentos\Embarcadero\Studio\Projects\Teste_WK_2\Server\css\main.css</Transaction>
+    <Transaction>2022/10/28 19:52:52.000.274,=C:\Users\ahide\OneDrive\Documentos\Embarcadero\Studio\Projects\Teste_WK_2\Server\images\collapse.png</Transaction>
+    <Transaction>2022/10/28 19:52:52.000.022,=C:\Users\ahide\OneDrive\Documentos\Embarcadero\Studio\Projects\Teste_WK_2\Server\js\connection.js</Transaction>
+    <Transaction>2022/10/28 19:52:52.000.000,=C:\Users\ahide\OneDrive\Documentos\Embarcadero\Studio\Projects\Teste_WK_2\Server\js\callbackframework-min.js</Transaction>
+    <Transaction>2022/10/28 19:52:52.000.181,=C:\Users\ahide\OneDrive\Documentos\Embarcadero\Studio\Projects\Teste_WK_2\Server\templates\reversestring.html</Transaction>
+    <Transaction>2022/10/28 19:52:52.000.142,=C:\Users\ahide\OneDrive\Documentos\Embarcadero\Studio\Projects\Teste_WK_2\Server\css\serverfunctioninvoker.css</Transaction>
+    <Transaction>2022/10/28 19:52:52.000.071,=C:\Users\ahide\OneDrive\Documentos\Embarcadero\Studio\Projects\Teste_WK_2\Server\js\serverfunctioninvoker.js</Transaction>
+    <Transaction>2022/10/28 19:52:52.000.304,=C:\Users\ahide\OneDrive\Documentos\Embarcadero\Studio\Projects\Teste_WK_2\Server\images\expand.png</Transaction>
+    <Transaction>2022/10/28 19:53:15.000.692,C:\Users\ahide\OneDrive\Documentos\Embarcadero\Studio\Projects\Teste_WK_2\Server\uServerMethods.pas=C:\Users\ahide\OneDrive\Documentos\Embarcadero\Studio\Projects\Teste_WK_2\Server\ServerMethodsUnit1.pas</Transaction>
+    <Transaction>2022/10/28 19:53:30.000.564,C:\Users\ahide\OneDrive\Documentos\Embarcadero\Studio\Projects\Teste_WK_2\Server\uWebModule.dfm=C:\Users\ahide\OneDrive\Documentos\Embarcadero\Studio\Projects\Teste_WK_2\Server\WebModuleUnit1.dfm</Transaction>
+    <Transaction>2022/10/28 19:53:30.000.564,C:\Users\ahide\OneDrive\Documentos\Embarcadero\Studio\Projects\Teste_WK_2\Server\uWebModule.pas=C:\Users\ahide\OneDrive\Documentos\Embarcadero\Studio\Projects\Teste_WK_2\Server\WebModuleUnit1.pas</Transaction>
+    <Transaction>2022/10/28 19:54:04.000.521,C:\Users\ahide\OneDrive\Documentos\Embarcadero\Studio\Projects\Teste_WK_2\Server\uServer.pas=C:\Users\ahide\OneDrive\Documentos\Embarcadero\Studio\Projects\Teste_WK_2\Server\FormUnit1.pas</Transaction>
+    <Transaction>2022/10/28 19:54:04.000.521,C:\Users\ahide\OneDrive\Documentos\Embarcadero\Studio\Projects\Teste_WK_2\Server\uServer.dfm=C:\Users\ahide\OneDrive\Documentos\Embarcadero\Studio\Projects\Teste_WK_2\Server\FormUnit1.dfm</Transaction>
+    <Transaction>2022/10/28 20:01:04.000.453,=C:\Users\ahide\OneDrive\Documentos\Embarcadero\Studio\Projects\Teste_WK_2\Server\uPessoa.pas</Transaction>
+    <Transaction>2022/10/28 20:01:04.000.416,=C:\Users\ahide\OneDrive\Documentos\Embarcadero\Studio\Projects\Teste_WK_2\Server\uDMConexao.pas</Transaction>
+  </Transactions>
+	<ProjectSortOrder AutoSort="0" SortType="0">
+    <File Path="css"/>
+    <File Path="css\main.css"/>
+    <File Path="css\serverfunctioninvoker.css"/>
+    <File Path="images"/>
+    <File Path="images\collapse.png"/>
+    <File Path="images\expand.png"/>
+    <File Path="js"/>
+    <File Path="js\base64-min.js"/>
+    <File Path="js\base64.js"/>
+    <File Path="js\callbackframework-min.js"/>
+    <File Path="js\callbackframework.js"/>
+    <File Path="js\connection.js"/>
+    <File Path="js\json2-min.js"/>
+    <File Path="js\json2.js"/>
+    <File Path="js\serverfunctionexecutor-min.js"/>
+    <File Path="js\serverfunctionexecutor.js"/>
+    <File Path="js\serverfunctioninvoker.js"/>
+    <File Path="js\serverfunctions.js"/>
+    <File Path="templates"/>
+    <File Path="templates\reversestring.html"/>
+    <File Path="templates\serverfunctioninvoker.html"/>
+    <File Path="uDMConexao.pas"/>
+    <File Path="uDMConexao.dfm"/>
+    <File Path="uPessoa.pas"/>
+    <File Path="uServer.pas"/>
+    <File Path="uServer.dfm"/>
+    <File Path="uServerMethods.pas"/>
+    <File Path="uWebModule.pas"/>
+    <File Path="uWebModule.dfm"/>
+  </ProjectSortOrder>
+</BorlandProject>

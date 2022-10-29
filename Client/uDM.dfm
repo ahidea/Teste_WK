@@ -1,68 +1,23 @@
 object DM: TDM
   Height = 444
-  Width = 350
-  object RESTpessoa: TRESTClient
-    BaseURL = 'http://localhost:9000'
-    Params = <>
-    SynchronizedEvents = False
-    Left = 64
-    Top = 24
-  end
-  object RESTRequestGET: TRESTRequest
-    AssignedValues = [rvConnectTimeout, rvReadTimeout]
-    Client = RESTpessoa
-    Params = <>
-    Resource = 'pessoa/31'
-    Response = RESTResponseGET
-    SynchronizedEvents = False
-    Left = 64
-    Top = 96
-  end
-  object RESTResponseGET: TRESTResponse
-    Left = 168
-    Top = 96
-  end
+  Width = 367
   object RESTRequestGET_ping: TRESTRequest
     AssignedValues = [rvConnectTimeout, rvReadTimeout]
-    Client = RESTpessoa
+    Client = REST_Pessoa
     Params = <>
     Resource = 'ping'
     Response = RESTResponseGET_ping
     SynchronizedEvents = False
-    Left = 64
-    Top = 352
+    Left = 80
+    Top = 336
   end
   object RESTResponseGET_ping: TRESTResponse
-    Left = 200
-    Top = 352
+    Left = 224
+    Top = 336
   end
-  object RESTRequestPOST: TRESTRequest
+  object RESTRequest_PUT: TRESTRequest
     AssignedValues = [rvConnectTimeout, rvReadTimeout]
-    Client = RESTpessoa
-    Method = rmPOST
-    Params = <
-      item
-        Kind = pkREQUESTBODY
-        Name = 'body8627DF54B8DC40158975D27A39FE11A1'
-        Value = 
-          '{'#13#10'    "flnatureza": 1,'#13#10'    "dsdocumento": "000.000.0031-23",'#13#10 +
-          '    "nmprimeiro": "Allan",'#13#10'    "nmsegundo": "Silva",'#13#10'    "cep"' +
-          ': "07092-090"'#13#10'}'#13#10#13#10
-        ContentTypeStr = 'application/json'
-      end>
-    Resource = 'pessoa'
-    Response = RESTResponsePOST
-    SynchronizedEvents = False
-    Left = 64
-    Top = 160
-  end
-  object RESTResponsePOST: TRESTResponse
-    Left = 176
-    Top = 160
-  end
-  object RESTRequestPUT: TRESTRequest
-    AssignedValues = [rvConnectTimeout, rvReadTimeout]
-    Client = RESTpessoa
+    Client = REST_Pessoa
     Method = rmPUT
     Params = <
       item
@@ -73,37 +28,63 @@ object DM: TDM
           'mprimeiro":"Allan","nmsegundo":"Silvano","cep":"07092-090"}'
         ContentTypeStr = 'application/json'
       end>
-    Resource = 'pessoa'
-    Response = RESTResponsePUT
+    Resource = 'Pessoa'
+    Response = RESTResponse_PUT
     SynchronizedEvents = False
-    Left = 64
-    Top = 224
+    Left = 80
+    Top = 208
   end
-  object RESTResponsePUT: TRESTResponse
-    Left = 176
-    Top = 224
-  end
-  object RESTRequestDELETE: TRESTRequest
-    AssignedValues = [rvConnectTimeout, rvReadTimeout]
-    Client = RESTpessoa
-    Method = rmDELETE
-    Params = <
-      item
-        Kind = pkREQUESTBODY
-        Name = 'body9CE5BE882D1F4B52A0A6A724822C5859'
-        Value = 
-          '{"idpessoa":32,"flnatureza":1,"dsdocumento":"000.000.0031-23","n' +
-          'mprimeiro":"Allan","nmsegundo":"Silvano","cep":"07092-090"}'
-        ContentTypeStr = 'application/json'
-      end>
-    Resource = 'pessoa/33'
-    Response = RESTResponseDELETE
-    SynchronizedEvents = False
-    Left = 64
-    Top = 288
-  end
-  object RESTResponseDELETE: TRESTResponse
+  object RESTResponse_PUT: TRESTResponse
     Left = 192
-    Top = 288
+    Top = 208
+  end
+  object RESTRequest_GET: TRESTRequest
+    AssignedValues = [rvConnectTimeout, rvReadTimeout]
+    Client = REST_Pessoa
+    Params = <>
+    Resource = 'Pessoa/id'
+    Response = RESTResponse_GET
+    SynchronizedEvents = False
+    Left = 80
+    Top = 80
+  end
+  object RESTResponse_GET: TRESTResponse
+    Left = 192
+    Top = 80
+  end
+  object REST_Pessoa: TRESTClient
+    BaseURL = 'http://localhost:9000/datasnap/rest/TServerMethods'
+    Params = <>
+    SynchronizedEvents = False
+    Left = 80
+    Top = 16
+  end
+  object RESTRequest_POST: TRESTRequest
+    AssignedValues = [rvConnectTimeout, rvReadTimeout]
+    Client = REST_Pessoa
+    Params = <>
+    Resource = 'Pessoa'
+    Response = RESTResponse_POST
+    SynchronizedEvents = False
+    Left = 80
+    Top = 144
+  end
+  object RESTResponse_POST: TRESTResponse
+    Left = 200
+    Top = 144
+  end
+  object RESTRequest_DELETE: TRESTRequest
+    AssignedValues = [rvConnectTimeout, rvReadTimeout]
+    Client = REST_Pessoa
+    Params = <>
+    Resource = 'Pessoa/id'
+    Response = RESTResponse_DELETE
+    SynchronizedEvents = False
+    Left = 80
+    Top = 272
+  end
+  object RESTResponse_DELETE: TRESTResponse
+    Left = 208
+    Top = 272
   end
 end

@@ -2,7 +2,7 @@ object frmCliente: TfrmCliente
   Left = 0
   Top = 0
   Caption = 'Cliente'
-  ClientHeight = 403
+  ClientHeight = 400
   ClientWidth = 706
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -100,26 +100,12 @@ object frmCliente: TfrmCliente
   end
   object bAPI_ping: TButton
     Left = 600
-    Top = 195
+    Top = 287
     Width = 75
     Height = 25
     Caption = 'API Ping'
-    TabOrder = 0
+    TabOrder = 11
     OnClick = bAPI_pingClick
-  end
-  object Memo1: TMemo
-    Left = 0
-    Top = 378
-    Width = 706
-    Height = 25
-    Align = alBottom
-    Lines.Strings = (
-      'Memo1')
-    TabOrder = 1
-    Visible = False
-    ExplicitLeft = -80
-    ExplicitTop = 389
-    ExplicitWidth = 806
   end
   object ed_idpessoa: TEdit
     Left = 16
@@ -127,7 +113,7 @@ object frmCliente: TfrmCliente
     Width = 73
     Height = 23
     NumbersOnly = True
-    TabOrder = 2
+    TabOrder = 0
     OnChange = ed_idpessoaChange
     OnKeyPress = ed_idpessoaKeyPress
   end
@@ -138,7 +124,7 @@ object frmCliente: TfrmCliente
     Height = 23
     MaxLength = 6
     NumbersOnly = True
-    TabOrder = 3
+    TabOrder = 1
   end
   object ed_dsdocumento: TEdit
     Left = 265
@@ -146,7 +132,7 @@ object frmCliente: TfrmCliente
     Width = 121
     Height = 23
     MaxLength = 20
-    TabOrder = 4
+    TabOrder = 2
   end
   object ed_nmprimeiro: TEdit
     Left = 120
@@ -154,7 +140,7 @@ object frmCliente: TfrmCliente
     Width = 407
     Height = 23
     MaxLength = 100
-    TabOrder = 5
+    TabOrder = 3
   end
   object ed_nmsegundo: TEdit
     Left = 120
@@ -162,7 +148,7 @@ object frmCliente: TfrmCliente
     Width = 407
     Height = 23
     MaxLength = 100
-    TabOrder = 6
+    TabOrder = 4
   end
   object ed_dtregistro: TEdit
     Left = 406
@@ -171,7 +157,7 @@ object frmCliente: TfrmCliente
     Height = 23
     TabStop = False
     ReadOnly = True
-    TabOrder = 7
+    TabOrder = 18
   end
   object bNovo: TButton
     Left = 600
@@ -179,7 +165,7 @@ object frmCliente: TfrmCliente
     Width = 75
     Height = 25
     Caption = 'Novo'
-    TabOrder = 8
+    TabOrder = 6
     OnClick = bNovoClick
   end
   object bEditar: TButton
@@ -188,7 +174,7 @@ object frmCliente: TfrmCliente
     Width = 75
     Height = 25
     Caption = 'Editar'
-    TabOrder = 9
+    TabOrder = 7
     OnClick = bEditarClick
   end
   object bExcluir: TButton
@@ -197,25 +183,25 @@ object frmCliente: TfrmCliente
     Width = 75
     Height = 25
     Caption = 'Excluir'
-    TabOrder = 10
+    TabOrder = 8
     OnClick = bExcluirClick
   end
   object bGravar: TButton
     Left = 600
-    Top = 124
+    Top = 137
     Width = 75
     Height = 25
     Caption = 'Gravar'
-    TabOrder = 11
+    TabOrder = 9
     OnClick = bGravarClick
   end
   object bCancelar: TButton
     Left = 600
-    Top = 155
+    Top = 168
     Width = 75
     Height = 25
     Caption = 'Cancelar'
-    TabOrder = 12
+    TabOrder = 10
     OnClick = bCancelarClick
   end
   object ed_dscep: TEdit
@@ -223,12 +209,12 @@ object frmCliente: TfrmCliente
     Top = 156
     Width = 121
     Height = 23
-    TabOrder = 13
+    TabOrder = 5
     OnChange = ed_dscepChange
   end
   object StatusBar1: TStatusBar
     Left = 0
-    Top = 359
+    Top = 381
     Width = 706
     Height = 19
     Panels = <
@@ -253,48 +239,53 @@ object frmCliente: TfrmCliente
       item
         Width = 10
       end>
-    ExplicitTop = 369
-    ExplicitWidth = 802
+    ExplicitTop = 380
+    ExplicitWidth = 702
   end
   object ed_dsuf: TEdit
     Left = 120
     Top = 200
     Width = 52
     Height = 23
+    TabStop = False
     ReadOnly = True
-    TabOrder = 15
+    TabOrder = 13
   end
   object ed_nmcidade: TEdit
     Left = 192
     Top = 200
     Width = 335
     Height = 23
+    TabStop = False
     ReadOnly = True
-    TabOrder = 16
+    TabOrder = 14
   end
   object ed_nmbairro: TEdit
     Left = 120
     Top = 244
     Width = 407
     Height = 23
+    TabStop = False
     ReadOnly = True
-    TabOrder = 17
+    TabOrder = 15
   end
   object ed_nmlogradouro: TEdit
     Left = 120
     Top = 288
     Width = 407
     Height = 23
+    TabStop = False
     ReadOnly = True
-    TabOrder = 18
+    TabOrder = 16
   end
   object ed_dscomplemento: TEdit
     Left = 120
     Top = 332
     Width = 407
     Height = 23
+    TabStop = False
     ReadOnly = True
-    TabOrder = 19
+    TabOrder = 17
   end
   object bProcessamentoEmLote: TButton
     Left = 600
@@ -302,7 +293,23 @@ object frmCliente: TfrmCliente
     Width = 75
     Height = 25
     Caption = 'Em Lote'
-    TabOrder = 20
+    TabOrder = 12
     OnClick = bProcessamentoEmLoteClick
+  end
+  object ProgressBar: TProgressBar
+    Left = 0
+    Top = 373
+    Width = 706
+    Height = 8
+    Align = alBottom
+    TabOrder = 20
+    ExplicitTop = 372
+    ExplicitWidth = 702
+  end
+  object OpenDialog: TOpenDialog
+    DefaultExt = 'txt'
+    InitialDir = '.'
+    Left = 624
+    Top = 224
   end
 end

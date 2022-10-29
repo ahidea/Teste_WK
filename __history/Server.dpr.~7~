@@ -1,0 +1,23 @@
+program Server;
+
+uses
+  Vcl.Forms,
+  Web.WebReq,
+  IdHTTPWebBrokerBridge,
+  uServer in 'uServer.pas' {Form1},
+  uServerMethods in 'uServerMethods.pas',
+  uServerContainer in 'uServerContainer.pas' {ServerContainer1: TDataModule},
+  uDMConexao in 'uDMConexao.pas' {DataModule1: TDataModule},
+  uPessoa in 'uPessoa.pas';
+
+{$R *.res}
+
+begin
+  Application.Initialize;
+  Application.MainFormOnTaskbar := True;
+  Application.CreateForm(TForm1, Form1);
+  Application.CreateForm(TServerContainer1, ServerContainer1);
+  Application.CreateForm(TDataModule1, DataModule1);
+  Application.Run;
+end.
+

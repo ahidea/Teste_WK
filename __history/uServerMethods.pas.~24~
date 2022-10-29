@@ -1,0 +1,125 @@
+unit uServerMethods;
+
+interface
+
+uses System.SysUtils, System.Classes, Datasnap.DSServer, Datasnap.DSAuth,
+     uPessoa;
+
+type
+{$METHODINFO ON}
+  TServerMethods = class(TComponent)
+    constructor Create(AOwner: TComponent); override;
+    destructor Destroy; override;
+
+  private
+    Pessoa: TPessoa;
+
+  public
+    // devolve string recebida
+    // retorna: {"result":["oi"]}
+    function EchoString(Value: string): string;
+
+    // obtem dados da pessoa idpessoa
+    // exemplo: http://localhost:9000/datasnap/rest/TServerMethods/GET/66
+    // retorna: {"result":["{"status":200,"data":[{"idpessoa":66,"flnatureza":"123","dsdocumento":"000.000.9991-23","nmprimeiro":"Joana","nmsegundo":"Silva","dtregistro":"2022-10-27","idendereco":39,"dscep":"07092-070","dsuf":"SP","nmcidade":"Guarulhos","nmbairro":"Gopouva","nmlogradouro":"Rua Helio Manzoni","dscomplemento":""}],"sucess":true}"]}
+    function GET( idpessoa: integer ): string;
+
+    // cadastrar uma pessoa, e seu endereço
+    // exemplo: http://localhost:9000/datasnap/rest/TServerMethods/POST/{"flnatureza": 123456,"dsdocumento": "000.000.0001-23","nmprimeiro": "José","nmsegundo": "Silva","cep": "07000-000"}
+    // retorno: {"status": 201,"sucess": true,"idpessoa": 33,"idendereco": 11}
+    function POST( aJson: string ): string;
+
+    // atualizar dados sobre uma pessoa
+    // exemplo: {"idpessoa": 43,"flnatureza": 1,"dsdocumento": "000.000.0001-23","nmprimeiro": "José","nmsegundo": "Silva","cep": "07092-080"}
+    // retorna: {"status": 200,"sucess": true}
+    function PUT( aJson: string ): string;
+
+    // deletar dados da pessoa idpessoa
+    // exemplo: http://localhost:9000/datasnap/rest/TServerMethods/DELETE/45
+    // retorna: {"result":["{"status":200,"sucess":true,"message":"registro apagado"}"]}
+    function DELETE( idpessoa: integer ): string;
+
+  end;
+{$METHODINFO OFF}
+
+implementation
+
+uses
+  System.StrUtils;
+
+constructor TServerMethods.Create(AOwner: TComponent);
+begin
+  inherited Create(AOwner);
+  Pessoa := TPessoa.Create;
+end;
+
+// deletar dados da pessoa idpessoa
+// http://localhost:9000/datasnap/rest/TServerMethods/DELETE/45
+function TServerMethods.DELETE(idpessoa: integer): string;
+var ret: string;
+    msgerro: string;
+begin
+  ret := Pessoa.DELETE_pessoa( idpessoa, msgerro );
+  // verifica se houve algum erro
+  if msgerro <> '' then begin
+    ret := msgerro;
+  end;
+  Result := ret;
+end;
+
+destructor TServerMethods.Destroy;
+begin
+  Pessoa.DisposeOf;
+end;
+
+// teste:
+// http://localhost:9000/datasnap/rest/TServerMethods/EchoString/oi
+function TServerMethods.EchoString(Value: string): string;
+begin
+  Result := Value;
+end;
+
+// obter dados sobre uma pessoa:
+// http://localhost:9000/datasnap/rest/TServerMethods/GET/1
+function TServerMethods.GET(idpessoa: integer): string;
+var ret: string;
+    msgerro: string;
+begin
+  ret := Pessoa.GET_pessoa( idpessoa, msgerro );
+  // verifica se houve algum erro
+  if msgerro <> '' then begin
+    ret := msgerro;
+  end;
+  Result := ret;
+end;
+
+// obter dados sobre uma pessoa:
+// http://localhost:9000/datasnap/rest/TServerMethods/POST/{"flnatureza": 123456,"dsdocumento": "000.000.0001-23","nmprimeiro": "José","nmsegundo": "Silva","cep": "07000-000"}
+function TServerMethods.POST(aJson: string): string;
+var ret: string;
+    msgerro: string;
+begin
+  ret := Pessoa.POST_pessoa( aJson, msgerro );
+  // verifica se houve algum erro
+  if msgerro <> '' then begin
+    ret := msgerro;
+  end;
+  Result := ret;
+end;
+
+// atualizar dados sobre uma pessoa
+// {"idpessoa": 43,"flnatureza": 1,"dsdocumento": "000.000.0001-23","nmprimeiro": "José","nmsegundo": "Silva","cep": "07092-080"}
+function TServerMethods.PUT(aJson: string): string;
+var ret: string;
+    msgerro: string;
+begin
+  ret := Pessoa.PUT_pessoa( aJson, msgerro );
+  // verifica se houve algum erro
+  if msgerro <> '' then begin
+    ret := msgerro;
+  end;
+  Result := ret;
+end;
+
+end.
+

@@ -8,12 +8,12 @@ uses
   FireDAC.Stan.Option, FireDAC.Stan.Param, FireDAC.Stan.Error, FireDAC.DatS,
   FireDAC.Phys.Intf, FireDAC.DApt.Intf, Data.DB, FireDAC.Comp.DataSet,
   FireDAC.Comp.Client, REST.Response.Adapter, REST.Client, Data.Bind.Components,
-  Data.Bind.ObjectScope, Vcl.StdCtrls, Vcl.Grids, Vcl.DBGrids, Vcl.ComCtrls;
+  Data.Bind.ObjectScope, Vcl.StdCtrls, Vcl.Grids, Vcl.DBGrids, Vcl.ComCtrls,
+  System.JSON;
 
 type
   TfrmCliente = class(TForm)
     bAPI_ping: TButton;
-    Memo1: TMemo;
     ed_idpessoa: TEdit;
     Label1: TLabel;
     ed_flnatureza: TEdit;
@@ -45,8 +45,11 @@ type
     Label11: TLabel;
     Label12: TLabel;
     bProcessamentoEmLote: TButton;
+    OpenDialog: TOpenDialog;
+    ProgressBar: TProgressBar;
 
     procedure FormCreate(Sender: TObject);
+    procedure FormShow(Sender: TObject);
 
     procedure bAPI_pingClick(Sender: TObject);
     procedure ed_idpessoaKeyPress(Sender: TObject; var Key: Char);
@@ -54,7 +57,6 @@ type
     procedure bNovoClick(Sender: TObject);
     procedure bEditarClick(Sender: TObject);
     procedure bExcluirClick(Sender: TObject);
-    procedure FormShow(Sender: TObject);
     procedure bGravarClick(Sender: TObject);
     procedure bCancelarClick(Sender: TObject);
     procedure ed_dscepChange(Sender: TObject);
@@ -69,29 +71,37 @@ type
 
     procedure SetModo( aModo: string );
 
-  public
+  public // processamento normal
 
     procedure ProcessarOnError( Sender: TObject);
 
-    procedure ExecutarGET_ping;
-    procedure TratarGET_ping;
+    procedure Executar_GET_ping;
+    procedure Tratar_GET_ping;
 
-    procedure ExecutarGET( idpessoa: integer );
-    procedure TratarGET;
+    procedure Executar_GET( idpessoa: integer );
+    procedure Tratar_GET;
 
-    procedure ExecutarPOST;
-    procedure TratarPOST;
+    procedure Executar_POST;
+    procedure Tratar_POST;
 
-    procedure ExecutarPUT;
-    procedure TratarPUT;
+    procedure Executar_PUT;
+    procedure Tratar_PUT;
 
-    procedure ExecutarDELETE( idpessoa: integer );
-    procedure TratarDELETE;
+    procedure Executar_DELETE( idpessoa: integer );
+    procedure Tratar_DELETE;
 
-    function  ExecutarPOST_ex(flnatureza:integer;dsdocumento,nmprimeiro,nmsegundo,dscep:string) : boolean;
-    procedure TratarPOST_ex;
+  public // usado para carregamento em lote
+
+    // para controle por ProcessamentoEmLote()
+    CarregamentoComSucesso: array of boolean;
+
+    procedure Executar_POST_ex( INDEXLOTE,flnatureza: integer; dsdocumento,nmprimeiro,nmsegundo,dscep: string );
+    procedure Tratar_POST_ex;
     procedure ProcessarOnError_ex( Sender: TObject);
-    procedure ProcessamentoEmLote;
+
+    procedure ProcessamentoEmLote( aFile: string );
+
+    procedure Wait_ms( ms : cardinal );
 
   end;
 
@@ -102,7 +112,7 @@ implementation
 
 {$R *.dfm}
 
-uses uDM, System.JSON, System.Generics.Collections;
+uses uDM, System.Generics.Collections;
 
 procedure TfrmCliente.bCancelarClick(Sender: TObject);
 begin
@@ -146,12 +156,15 @@ end;
 
 procedure TfrmCliente.bProcessamentoEmLoteClick(Sender: TObject);
 begin
-  ProcessamentoEmLote;
+  OpenDialog.InitialDir := GetCurrentDir;
+  if OpenDialog.Execute then begin
+    ProcessamentoEmLote( OpenDialog.FileName );
+  end;
 end;
 
 procedure TfrmCliente.bAPI_pingClick(Sender: TObject);
 begin
-  ExecutarGET_ping;
+  Executar_GET_ping;
 end;
 
 procedure TfrmCliente.ed_dscepChange(Sender: TObject);
@@ -175,20 +188,20 @@ procedure TfrmCliente.ed_idpessoaKeyPress(Sender: TObject; var Key: Char);
 begin
   if Key = #13 then begin
     ed_idpessoa.Tag := StrToIntDef( ed_idpessoa.Text,0);
-    ExecutarGET( ed_idpessoa.Tag );
+    Executar_GET( ed_idpessoa.Tag );
     SetModo('NovoOuEditarOuExcluir');
   end;
 end;
 
-procedure TfrmCliente.ExecutarDELETE(idpessoa: integer);
+procedure TfrmCliente.Executar_DELETE(idpessoa: integer);
 begin
   StatusBar1.Panels[4].Text := '';
   try
-    DM.RESTRequestDELETE.Params.Clear;
-    DM.RESTRequestDELETE.Body.ClearBody;
-    DM.RESTRequestDELETE.Method := rmDELETE;
-    DM.RESTRequestDELETE.Resource := 'pessoa/' + inttostr(idpessoa);
-    DM.RESTRequestDELETE.ExecuteAsync( TratarDELETE, true, true, ProcessarOnError );
+    DM.RESTRequest_DELETE.Params.Clear;
+    DM.RESTRequest_DELETE.Body.ClearBody;
+    DM.RESTRequest_DELETE.Method := rmDELETE;
+    DM.RESTRequest_DELETE.Resource := 'Pessoa/' + inttostr(idpessoa);
+    DM.RESTRequest_DELETE.ExecuteAsync( Tratar_DELETE, true, true, ProcessarOnError );
   except on e:exception do
     begin
       ed_idpessoa.Tag := 0;
@@ -197,15 +210,15 @@ begin
   end;
 end;
 
-procedure TfrmCliente.ExecutarGET( idpessoa: integer );
+procedure TfrmCliente.Executar_GET( idpessoa: integer );
 begin
   StatusBar1.Panels[4].Text := '';
   try
-    DM.RESTRequestGET.Params.Clear;
-    DM.RESTRequestGET.Body.ClearBody;
-    DM.RESTRequestGET.Method := rmGET;
-    DM.RESTRequestGET.Resource := 'pessoa/' + inttostr(idpessoa);
-    DM.RESTRequestGET.ExecuteAsync( TratarGET, true, true, ProcessarOnError );
+    DM.RESTRequest_GET.Params.Clear;
+    DM.RESTRequest_GET.Body.ClearBody;
+    DM.RESTRequest_GET.Method := rmGET;
+    DM.RESTRequest_GET.Resource := 'Pessoa/' + inttostr(idpessoa);
+    DM.RESTRequest_GET.ExecuteAsync( Tratar_GET, true, true, ProcessarOnError );
   except on e:exception do
     begin
       ed_idpessoa.Tag := 0;
@@ -214,7 +227,7 @@ begin
   end;
 end;
 
-procedure TfrmCliente.ExecutarGET_ping;
+procedure TfrmCliente.Executar_GET_ping;
 begin
   StatusBar1.Panels[4].Text := '';
   StatusBar1.Panels[1].Text := '...';
@@ -222,8 +235,8 @@ begin
     DM.RESTRequestGET_ping.Params.Clear;
     DM.RESTRequestGET_ping.Body.ClearBody;
     DM.RESTRequestGET_ping.Method := rmGET;
-    DM.RESTRequestGET_ping.Resource := 'ping' ;
-    DM.RESTRequestGET_ping.ExecuteAsync( TratarGET_ping, true, true, ProcessarOnError );
+    DM.RESTRequestGET_ping.Resource := 'IsRunning';
+    DM.RESTRequestGET_ping.ExecuteAsync( Tratar_GET_ping, true, true, ProcessarOnError );
   except on e:exception do
     begin
       StatusBar1.Panels[1].Text := '?';
@@ -232,28 +245,45 @@ begin
   end;
 end;
 
-procedure TfrmCliente.ExecutarPOST;
+function JSON_EscapeString(const value: string): string;
+var i : integer;
+begin // https://www.json.org/
+  result := '';
+  for i := 1 to Length(value) do begin
+    case value[i] of
+      '"' : result := result + '\"';
+      '\' : result := result + '\\';
+      '/' : result := result + '\/';
+      #8  : result := result + '\b';
+      #9  : result := result + '\t';
+      #10 : result := result + '\n';
+      #12 : result := result + '\f';
+      #13 : result := result + '\r';
+    else
+    //TODO : Deal with unicode characters properly!
+      result := result + value[i];
+    end;
+  end;
+end;
+
+procedure TfrmCliente.Executar_POST;
 var JO: TJSONObject;
 begin
   StatusBar1.Panels[4].Text := '';
   JO := TJSONObject.Create;
   try
-    //JO.AddPair('idpessoa', ed_idpessoa.Tag );
     JO.AddPair('flnatureza', StrToInt(ed_flnatureza.Text) );
     JO.AddPair('dsdocumento', ed_dsdocumento.Text );
     JO.AddPair('nmprimeiro', ed_nmprimeiro.Text );
     JO.AddPair('nmsegundo', ed_nmsegundo.Text );
     JO.AddPair('cep', ed_dscep.Text );
-
-    //Memo1.Text := JO.ToString;
-
     try
-      DM.RESTRequestPOST.Params.Clear;
-      DM.RESTRequestPOST.Body.ClearBody;
-      DM.RESTRequestPOST.Method := rmPOST;
-      DM.RESTRequestPOST.Resource := 'pessoa';
-      DM.RESTRequestPOST.Body.Add( JO.ToString, ContentTypeFromString('application/json') );
-      DM.RESTRequestPOST.ExecuteAsync( TratarPOST, true, true, ProcessarOnError );
+      DM.RESTRequest_POST.Params.Clear;
+      DM.RESTRequest_POST.Body.ClearBody;
+      DM.RESTRequest_POST.Method := rmPOST;
+      DM.RESTRequest_POST.Resource := 'Pessoa';
+      DM.RESTRequest_POST.Body.Add( JO.ToString, ContentTypeFromString('application/json') );
+      DM.RESTRequest_POST.ExecuteAsync( Tratar_POST, true, true, ProcessarOnError );
     except on e:exception do
       Showmessage('Erro ao registrar dados no servidor:' + e.Message );
     end;
@@ -262,31 +292,65 @@ begin
       JO.DisposeOf;
     end;
   end;
+
 end;
 
-var __magic__: boolean;
 procedure TfrmCliente.ProcessarOnError_ex(Sender: TObject);
 begin
   // houve um erro!
-  __magic__ := false;
 end;
 
-procedure TfrmCliente.TratarPOST_ex;
-var JO: TJSONObject;
+procedure TfrmCliente.Tratar_POST_ex;
+var json: string;
+    JOoriginal, JOresult: TJSONObject;
+    JAresult: TJSONArray;
 begin
-  if (DM.RESTRequestPOST.Response.StatusCode <> 201) and (DM.RESTRequestPOST.Response.StatusCode <> 200) then begin
-    __magic__ := false; // erro
+  // ok?
+  if (DM.RESTRequest_POST.Response.StatusCode <> 201) and (DM.RESTRequest_POST.Response.StatusCode <> 200) then begin
     exit;
   end;
-  // verifica se houve sucesso
-  JO := DM.RESTRequestPOST.Response.JSONValue as TJSONObject;
-  __magic__ := JO.GetValue<boolean>('sucess',false);
+
+  // esperado:
+  //  {
+  //      "result": [
+  //          {
+  //              "status": 201,
+  //              "sucess": true,
+  //              "idpessoa": 73,
+  //              "idendereco": 42,
+  //              "INDEXLOTE": 123    <-- apena quando for processamento me lote
+  //          }
+  //      ]
+  //  }
+
+  // json do retorno
+  json := DM.RESTRequest_POST.Response.JSONValue.ToString;
+
+  JOoriginal := TJSONObject.ParseJSONValue(TEncoding.UTF8.GetBytes( json ), 0) as TJSONObject;
+  try
+    JAresult := JOoriginal.FindValue('result') as TJSONArray;
+    if Assigned(JAresult) then begin
+      // pegar o primeiro item do array
+      JOresult := JAresult.Items[0].GetValue<TJSONObject>();
+      // sucesso ou fracasso ?
+      if JOresult.FindValue('sucess').AsType<boolean> then begin
+        try
+          CarregamentoComSucesso[ JOresult.FindValue('INDEXLOTE').AsType<integer> ] := true;
+        except on e:exception do
+          // nada a fazer
+        end;
+      end;
+    end;
+  finally
+    if Assigned(JOoriginal) then begin
+      JOoriginal.DisposeOf;
+    end;
+  end;
 end;
 
-function TfrmCliente.ExecutarPOST_ex(flnatureza:integer;dsdocumento,nmprimeiro,nmsegundo,dscep:string) : boolean;
+procedure TfrmCliente.Executar_POST_ex( INDEXLOTE, flnatureza:integer; dsdocumento,nmprimeiro,nmsegundo,dscep:string);
 var JO: TJSONObject;
 begin
-  __magic__ := false;
   JO := TJSONObject.Create;
   try
     JO.AddPair('flnatureza', flnatureza );
@@ -294,17 +358,18 @@ begin
     JO.AddPair('nmprimeiro', nmprimeiro );
     JO.AddPair('nmsegundo', nmsegundo );
     JO.AddPair('cep', dscep );
+    JO.AddPair('INDEXLOTE', INDEXLOTE ); // vai e volta pela API
     try
-      DM.RESTRequestPOST.Params.Clear;
-      DM.RESTRequestPOST.Body.ClearBody;
-      DM.RESTRequestPOST.Method := rmPOST;
-      DM.RESTRequestPOST.Resource := 'pessoa';
-      DM.RESTRequestPOST.Body.Add( JO.ToString, ContentTypeFromString('application/json') );
-      __magic__ := false;
-      DM.RESTRequestPOST.ExecuteAsync( TratarPOST_ex, true, true, ProcessarOnError_ex );
-      Result := __magic__;
+      DM.RESTRequest_POST.Params.Clear;
+      DM.RESTRequest_POST.Body.ClearBody;
+      DM.RESTRequest_POST.Method := rmPOST;
+      DM.RESTRequest_POST.Resource := 'Pessoa';
+      DM.RESTRequest_POST.Body.Add( JO.ToString, ContentTypeFromString('application/json') );
+      //-------------------------------------------------------------------------------------
+      DM.RESTRequest_POST.ExecuteAsync( Tratar_POST_ex, true, true, ProcessarOnError_ex );
+      //-------------------------------------------------------------------------------------
     except on e:exception do
-      Showmessage('Erro ao registrar dados no servidor:' + e.Message );
+      // nada a fazer
     end;
   finally
     if Assigned(JO) then begin
@@ -313,7 +378,7 @@ begin
   end;
 end;
 
-procedure TfrmCliente.ExecutarPUT;
+procedure TfrmCliente.Executar_PUT;
 var JO: TJSONObject;
 begin
   StatusBar1.Panels[4].Text := '';
@@ -325,16 +390,13 @@ begin
     JO.AddPair('nmprimeiro', ed_nmprimeiro.Text );
     JO.AddPair('nmsegundo', ed_nmsegundo.Text );
     JO.AddPair('cep', ed_dscep.Text );
-
-    //Memo1.Text := JO.ToString;
-
     try
-      DM.RESTRequestPUT.Params.Clear;
-      DM.RESTRequestPUT.Body.ClearBody;
-      DM.RESTRequestPUT.Method := rmPUT;
-      DM.RESTRequestPUT.Resource := 'pessoa';
-      DM.RESTRequestPUT.Body.Add( JO.ToString, ContentTypeFromString('application/json') );
-      DM.RESTRequestPUT.ExecuteAsync( TratarPUT, true, true, ProcessarOnError );
+      DM.RESTRequest_PUT.Params.Clear;
+      DM.RESTRequest_PUT.Body.ClearBody;
+      DM.RESTRequest_PUT.Method := rmPUT;
+      DM.RESTRequest_PUT.Resource := 'Pessoa/' + IntToStr( ed_idpessoa.Tag );
+      DM.RESTRequest_PUT.Body.Add( JO.ToString, ContentTypeFromString('application/json') );
+      DM.RESTRequest_PUT.ExecuteAsync( Tratar_PUT, true, true, ProcessarOnError );
     except on e:exception do
       begin
         Showmessage('ERRO ao registrar dados no servidor:' + e.Message );
@@ -350,11 +412,13 @@ end;
 procedure TfrmCliente.FormCreate(Sender: TObject);
 begin
   Modo := '';
+  ProgressBar.Visible := false;
 end;
 
 procedure TfrmCliente.FormShow(Sender: TObject);
 begin
   SetModo('Default');
+  Executar_GET_ping;
 end;
 
 procedure TfrmCliente.LimparCamposPessoa;
@@ -372,100 +436,235 @@ begin
   ed_dscomplemento.Text := '';
 end;
 
-procedure TfrmCliente.TratarDELETE;
-var JO: TJSONObject;
-begin
-  if DM.RESTRequestDELETE.Response.StatusCode <> 200 then begin
-    Showmessage('Ocorreu um erro ao deletar registro: '+DM.RESTRequestDELETE.Response.StatusCode.ToString );
-    exit;
-  end;
 
-  //memo1.text := DM.RESTRequestDELETE.Response.JSONValue.ToString;
-
-  JO := DM.RESTRequestDELETE.Response.JSONValue as TJSONObject;
-  if JO.GetValue<boolean>('sucess',false) then begin
-    SetModo('Default');
-  end;
-end;
-
-procedure TfrmCliente.TratarGET;
+procedure TfrmCliente.Tratar_DELETE;
 var json: string;
-    JA: TJSONArray;
-    JO,JO2: TJSONObject;
+    JAresult: TJSONArray;
+    JOoriginal, JOresult: TJSONObject;
 begin
-  if DM.RESTRequestGET.Response.StatusCode <> 200 then begin
-    Showmessage('Ocorreu um erro ao realizar a consulta: '+DM.RESTRequestGET.Response.StatusCode.ToString );
+  if DM.RESTRequest_DELETE.Response.StatusCode <> 200 then begin
+    Showmessage('Ocorreu um erro ao deletar registro: '+DM.RESTRequest_DELETE.Response.StatusCode.ToString );
     exit;
   end;
 
-  json := DM.RESTRequestGET.Response.JSONValue.ToString;
-  //memo1.text := DM.RESTRequestGET.Response.JSONValue.ToString;
+  // esperado:
+  //  {
+  //      "result": [
+  //          {
+  //              "status": 200,
+  //              "sucess": true,
+  //              "message": "registro apagado"
+  //          }
+  //      ]
+  //  }
 
-  JO := TJSONObject.ParseJSONValue(TEncoding.UTF8.GetBytes(json), 0) as TJSONObject;
+  // json do retorno
+  json := DM.RESTRequest_DELETE.Response.JSONValue.ToString;
+
+  JOoriginal := TJSONObject.ParseJSONValue(TEncoding.UTF8.GetBytes( json ), 0) as TJSONObject;
   try
-  JA := JO.FindValue('data') as TJSONArray;
-  if Assigned(JA) then begin
-    JO2 := JA.Items[0] as TJSONObject;
+    JAresult := JOoriginal.FindValue('result') as TJSONArray;
+    if Assigned(JAresult) then begin
 
-    if Assigned(JO2) then begin
-      ed_flnatureza.Text    := JO2.GetValue<string>('flnatureza','');
-      ed_dsdocumento.Text   := JO2.GetValue<string>('dsdocumento','');
-      ed_nmprimeiro.Text    := JO2.GetValue<string>('nmprimeiro','');
-      ed_nmsegundo.Text     := JO2.GetValue<string>('nmsegundo','');
-      ed_dtregistro.Text    := JO2.GetValue<string>('dtregistro','');
-      ed_dscep.Text         := JO2.GetValue<string>('dscep','');
-      ed_dsuf.Text          := JO2.GetValue<string>('dsuf','');
-      ed_nmcidade.Text      := JO2.GetValue<string>('nmcidade','');
-      ed_nmbairro.Text      := JO2.GetValue<string>('nmbairro','');
-      ed_nmlogradouro.Text  := JO2.GetValue<string>('nmlogradouro','');
-      ed_dscomplemento.Text := JO2.GetValue<string>('dscomplemento','');
+      // objeto com as informações
+      JOresult := JAresult.Items[0].GetValue<TJSONObject>();
+
+      if JOresult.FindValue('sucess').AsType<boolean> then begin
+        Showmessage( JOresult.GetValue<string>('message','') );
+      end;
+
+      SetModo('Default');
+
+    end;
+  finally
+    if Assigned(JOoriginal) then begin
+      JOoriginal.DisposeOf;
     end;
   end;
-  finally
-    if Assigned(JO) then begin
-      JO.DisposeOf;
+
+end;
+
+
+procedure TfrmCliente.Tratar_GET;
+var json: string;
+    JAresult,JAdata: TJSONArray;
+    JOoriginal,JOresult,JOdata: TJSONObject;
+begin
+  if DM.RESTRequest_GET.Response.StatusCode <> 200 then begin
+    Showmessage('Ocorreu um erro ao realizar a consulta: '+DM.RESTRequest_GET.Response.StatusCode.ToString );
+    exit;
+  end;
+
+  // esperado:
+  //  {
+  //      "result": [
+  //          {
+  //              "status": 200,
+  //              "data": [
+  //                  {
+  //                      "idpessoa": 68,
+  //                      "flnatureza": "135",
+  //                      "dsdocumento": "87582475824",
+  //                      "nmprimeiro": "ZE",
+  //                      "nmsegundo": "CARIOCA",
+  //                      "dtregistro": "2022-10-28",
+  //                      "idendereco": 0,
+  //                      "dscep": "",
+  //                      "dsuf": "",
+  //                      "nmcidade": "",
+  //                      "nmbairro": "",
+  //                      "nmlogradouro": "",
+  //                      "dscomplemento": ""
+  //                  }
+  //              ],
+  //              "sucess": true
+  //          }
+  //      ]
+  //  }
+  //
+  //  ou
+  //
+  //  {
+  //      "result": [
+  //          {
+  //              "status": 404,
+  //              "sucess": false,
+  //              "message": "not found"
+  //          }
+  //      ]
+  //  }
+
+
+  // json do retorno
+  json := DM.RESTRequest_GET.Response.JSONValue.ToString;
+
+  JOoriginal := TJSONObject.ParseJSONValue(TEncoding.UTF8.GetBytes( json ), 0) as TJSONObject;
+  try
+    // procurar result
+    JAresult := JOoriginal.FindValue('result') as TJSONArray;
+
+    if Assigned(JAresult) then begin
+
+      JOresult := JAresult.Items[0].GetValue<TJSONObject>();
+
+      if not JOresult.FindValue('sucess').AsType<boolean> then begin
+        Showmessage( JOresult.GetValue<string>('message','') );
+        SetModo('Default');
+        exit;
+      end;
+
+      if Assigned(JOresult) then begin
+
+        // procurar data
+        JAdata := JOresult.FindValue('data') as TJSONArray;
+
+        if Assigned(JAdata) then begin
+
+          JOdata := JAdata.Items[0].GetValue<TJSONObject>();
+
+          // finalmente
+          ed_idpessoa.Tag       := JOdata.FindValue('idpessoa').AsType<integer>;
+          ed_flnatureza.Text    := JOdata.FindValue('flnatureza').AsType<string>;
+          ed_dsdocumento.Text   := JOdata.FindValue('dsdocumento').AsType<string>;
+          ed_nmprimeiro.Text    := JOdata.FindValue('nmprimeiro').AsType<string>;
+          ed_nmsegundo.Text     := JOdata.FindValue('nmsegundo').AsType<string>;
+          ed_dtregistro.Text    := JOdata.FindValue('dtregistro').AsType<string>;
+          ed_dscep.Text         := JOdata.FindValue('dscep').AsType<string>;
+          ed_dsuf.Text          := JOdata.FindValue('dsuf').AsType<string>;
+          ed_nmcidade.Text      := JOdata.FindValue('nmcidade').AsType<string>;
+          ed_nmbairro.Text      := JOdata.FindValue('nmbairro').AsType<string>;
+          ed_nmlogradouro.Text  := JOdata.FindValue('nmlogradouro').AsType<string>;
+          ed_dscomplemento.Text := JOdata.FindValue('dscomplemento').AsType<string>;
+
+        end;
+      end;
     end;
+  finally
+    if Assigned(JOoriginal) then begin
+      JOoriginal.DisposeOf;
+    end;
+    SetModo('NovoOuEditarOuExcluir');
   end;
 end;
 
-procedure TfrmCliente.ProcessamentoEmLote;
+procedure TfrmCliente.ProcessamentoEmLote( aFile: string );
 var SL, SLL: TStringList;
     i: integer;
+    Total,Realizados: integer;
+    flnatureza: integer;
+    dsdocumento,nmprimeiro,nmsegundo,dscep: string;
 begin
   SL := TStringList.Create;
   try
     // carregar arquivo
-    SL.LoadFromFile( GetCurrentDir+'\carga.txt' );
+    SL.LoadFromFile( aFile );
 
+    if SL.Count = 0 then begin
+      exit;
+    end;
+
+    SetLength( CarregamentoComSucesso, SL.Count );
+
+    Total := SL.Count;
+    Realizados := 0;
+    ProgressBar.Position := 0;
+    ProgressBar.Min := 0;
+    ProgressBar.Max := 100;
+    ProgressBar.Visible := true;
+
+    // para carregar uma linha por vez
     SLL := TStringList.Create;
     try
-      // carregar em SLL, uma linha por vez de SL, para separar
-      for i := SL.Count-1 downto 0 do begin
+      // uma linha (== um registro) por vez de SL
+      // separar
+      // exclui de SL se ok
+      // o que sobrar fica no arquivo .invalidos
+      for i := 0 to SL.Count-1 do begin
 
         SLL.StrictDelimiter := True;
 
         // recebe a linha
         SLL.CommaText := SL[i];
 
-        //Showmessage(SLL[0]+#13+SLL[1]+#13+SLL[2]+#13+SLL[3]+#13+SLL[4]+#13);
+        // campos
+        flnatureza  := StrToIntDef( SLL[0], 0 );
+        dsdocumento := SLL[1];
+        nmprimeiro  := SLL[2];
+        nmsegundo   := SLL[3];
+        dscep       := SLL[4];
 
-        // processar a linha --> se ok retorna true
-        if ExecutarPOST_ex
-        (StrToIntDef(SLL[0],0)  // flnatureza
-        ,SLL[1]                 // dsdocumento
-        ,SLL[2]                 // nmprimeiro
-        ,SLL[3]                 // nmsegundo
-        ,SLL[4]                 // dscep
-        ) then begin
-          // se ok --> apagar esta linha de SL
+        // a confirmação volta pela API no campo "INDEXLOTE"
+        // isso será trado em Tratar_POST_ex()
+        CarregamentoComSucesso[i] := false;
+
+        // processar a linha
+        Executar_POST_ex( i, flnatureza, dsdocumento, nmprimeiro, nmsegundo, dscep );
+
+        inc( Realizados );
+        ProgressBar.Position := Round( 100*realizados/Total );
+
+        Wait_ms(250);
+
+      end; // for
+
+      // comparar SL com CarregamentoComSucesso[]
+
+      for i := SL.Count-1 downto 0 do begin
+        // remover os itens cadastrados com sucesso
+        if CarregamentoComSucesso[i] then begin
           SL.Delete(i);
         end;
-        sleep(1000);
       end;
-
-      // se sobrou alguma linha em SL --> provavelmente cep's invalidos
+      // se sobrou alguma linha em SL --> gerar arquivos com invalidos
       if SL.Count > 0 then begin
-        SL.SaveToFile( GetCurrentDir+'\carga.txt.invalidos' );
+        SL.SaveToFile( aFile + '.invalidos' );
+        Showmessage('*** Carga realizada com sucesso parcial.'#13#13
+                   +'Os casos que não foram registrados, estão salvos no arquivo:'#13#13
+                   +'      '+System.SysUtils.ExtractFileName(aFile + '.invalidos')+#13#13
+                   +'na mesma pasta do original');
+      end
+      else begin
+        Showmessage('*** Carga realizada com sucesso ***');
       end;
 
     finally
@@ -474,6 +673,7 @@ begin
 
   finally
     FreeAndNil(SL);
+    ProgressBar.Visible := false;
   end;
 end;
 
@@ -558,7 +758,7 @@ begin
                          , 'Deseja realmente excluir esta pessoa?'
                          , 'ATENÇÃO', MB_YESNO + MB_ICONWARNING + MB_DEFBUTTON1 + MB_APPLMODAL ) = IDYES;
     if excluir then begin
-      ExecutarDELETE(ed_idpessoa.Tag);
+      Executar_DELETE(ed_idpessoa.Tag);
       exit;
     end
     else begin
@@ -594,7 +794,7 @@ begin
         exit;
       end;
       // atualizar os edit's
-      ExecutarGET( ed_idpessoa.Tag );
+      Executar_GET( ed_idpessoa.Tag );
       SetModo('NovoOuEditarOuExcluir');
       exit;
     end;
@@ -602,7 +802,7 @@ begin
   //-----------------------------------------------------------
   if aModo = 'Gravar' then begin
     if Modo = 'Novo' then begin
-      ExecutarPOST;
+      Executar_POST;
       // recarregar --> TratarPOST
       exit;
     end;
@@ -611,7 +811,7 @@ begin
         // erro
         exit;
       end;
-      ExecutarPUT;
+      Executar_PUT;
       // atualizar os edit's --> TratarPUT
       exit;
     end;
@@ -633,18 +833,43 @@ begin
   ed_dscomplemento.Enabled := false;
 end;
 
-procedure TfrmCliente.TratarGET_ping;
-var JO: TJSONObject;
+procedure TfrmCliente.Tratar_GET_ping;
+var JOoriginal: TJSONObject;
+    JAresult: TJSONArray;
+    json, info: string;
 begin
   if DM.RESTRequestGET_ping.Response.StatusCode <> 200 then begin
-    Showmessage('Ocorreu um erro ao realizar a consulta: '+DM.RESTRequestGET.Response.StatusCode.ToString );
+    Showmessage('Ocorreu um erro ao realizar a consulta: '+DM.RESTRequest_GET.Response.StatusCode.ToString );
     exit;
   end;
 
-  //memo1.text := DM.RESTRequestGET_ping.Response.JSONValue.ToString;
+  // esperado:
+  //  {
+  //      "result": [
+  //          "Running"
+  //      ]
+  //  }
 
-  JO := DM.RESTRequestGET_ping.Response.JSONValue as TJSONObject;
-  if JO.GetValue<boolean>('sucess') then begin
+  json := DM.RESTRequestGET_ping.Response.JSONValue.ToString;
+  info := '';
+
+  JOoriginal := TJSONObject.ParseJSONValue(TEncoding.UTF8.GetBytes( json ), 0) as TJSONObject;
+  try
+
+    JAresult := JOoriginal.FindValue('result') as TJSONArray;
+
+    if Assigned(JAresult) then begin
+      // json com as informações
+      info := JAresult.Items[0].GetValue<string>();
+    end;
+
+  finally
+    if Assigned(JOoriginal) then begin
+      JOoriginal.DisposeOf;
+    end;
+  end;
+
+  if SameText( info, 'Running' ) then begin
     StatusBar1.Panels[1].Text := 'Ativa';
   end
   else begin
@@ -652,51 +877,140 @@ begin
   end;
 end;
 
-procedure TfrmCliente.TratarPOST;
-var JO: TJSONObject;
+procedure TfrmCliente.Tratar_POST;
+var json: string;
+    JOoriginal, JOresult: TJSONObject;
+    JAresult: TJSONArray;
 begin
-  if (DM.RESTRequestPOST.Response.StatusCode <> 201) and (DM.RESTRequestPOST.Response.StatusCode <> 200) then begin
-    Showmessage('Ocorreu um erro ao salvar registro: '+DM.RESTRequestPOST.Response.StatusCode.ToString );
+
+  if (DM.RESTRequest_POST.Response.StatusCode <> 201) and (DM.RESTRequest_POST.Response.StatusCode <> 200) then begin
+    Showmessage('Ocorreu um erro ao salvar registro: '+DM.RESTRequest_POST.Response.StatusCode.ToString );
     exit;
   end;
 
-  //memo1.text :=  DM.RESTRequestPOST.Response.JSONValue.ToString;
+  // esperado:
+  //  {
+  //      "result": [
+  //          {
+  //              "status": 201,
+  //              "sucess": true,
+  //              "idpessoa": 73,
+  //              "idendereco": 42
+  //          }
+  //      ]
+  //  }
 
-  JO := DM.RESTRequestPOST.Response.JSONValue as TJSONObject;
-  if JO.GetValue<boolean>('sucess',false) then begin
-    ed_idpessoa.Tag := JO.GetValue<integer>('idpessoa',0);
-    ed_idpessoa.Text := IntToStr( ed_idpessoa.Tag );
-    if ed_idpessoa.Tag > 0 then begin
-      ExecutarGET( ed_idpessoa.Tag );
-      SetModo('NovoOuEditarOuExcluir');
+  // json do retorno
+  json := DM.RESTRequest_POST.Response.JSONValue.ToString;
+
+  JOoriginal := TJSONObject.ParseJSONValue(TEncoding.UTF8.GetBytes( json ), 0) as TJSONObject;
+  try
+
+    JAresult := JOoriginal.FindValue('result') as TJSONArray;
+
+    if Assigned(JAresult) then begin
+      // objeto com as informações
+      JOresult := JAresult.Items[0].GetValue<TJSONObject>();
+
+      if JOresult.FindValue('sucess').AsType<boolean> then begin
+
+        ed_idpessoa.Tag := JOresult.FindValue('idpessoa').AsType<integer>;
+        ed_idpessoa.Text := IntToStr( ed_idpessoa.Tag );
+        if ed_idpessoa.Tag > 0 then begin
+          Executar_GET( ed_idpessoa.Tag );
+          SetModo('NovoOuEditarOuExcluir');
+        end;
+        StatusBar1.Panels[4].Text := '';
+
+      end
+      else begin
+        Showmessage( JOresult.GetValue<string>('message','') );
+        StatusBar1.Panels[4].Text := JOresult.GetValue<string>('message','');
+      end;
+
     end;
-    StatusBar1.Panels[4].Text := '';
-  end
-  else begin;
-    StatusBar1.Panels[4].Text := JO.GetValue<string>('message','');
+  finally
+    if Assigned(JOoriginal) then begin
+      JOoriginal.DisposeOf;
+    end;
   end;
-
 end;
 
-procedure TfrmCliente.TratarPUT;
-var JO: TJSONObject;
+procedure TfrmCliente.Tratar_PUT;
+var json: string;
+    JOoriginal, JOresult: TJSONObject;
+    JAresult: TJSONArray;
 begin
-  if DM.RESTRequestPUT.Response.StatusCode <> 200 then begin
-    Showmessage('Ocorreu um erro ao salvar registro: '+DM.RESTRequestPUT.Response.StatusCode.ToString );
+  if DM.RESTRequest_PUT.Response.StatusCode <> 200 then begin
+    Showmessage('Ocorreu um erro ao salvar registro: '+DM.RESTRequest_PUT.Response.StatusCode.ToString );
     exit;
   end;
 
-  //memo1.text := DM.RESTRequestPUT.Response.JSONValue.ToString;
+  // esperado:
+  //  {
+  //      "result": [
+  //          {
+  //              "status": 200,
+  //              "sucess": true
+  //          }
+  //      ]
+  //  }
+  //
+  // ou
+  //
+  //  {
+  //    "result":[
+  //      {
+  //        "status":400,
+  //        "sucess":false,
+  //        "message":"cep não existe"
+  //      }
+  //    ]
+  //  }
 
-  JO := DM.RESTRequestPUT.Response.JSONValue as TJSONObject;
-  if JO.GetValue<boolean>('sucess',false) then begin
-    ExecutarGET( ed_idpessoa.Tag );
-    SetModo('NovoOuEditarOuExcluir');
-    StatusBar1.Panels[4].Text := '';
-  end
-  else begin
-    StatusBar1.Panels[4].Text := JO.GetValue<string>('message','');
+  // json do retorno
+  json := DM.RESTRequest_PUT.Response.JSONValue.ToString;
+
+  JOoriginal := TJSONObject.ParseJSONValue(TEncoding.UTF8.GetBytes( json ), 0) as TJSONObject;
+  try
+
+    JAresult := JOoriginal.FindValue('result') as TJSONArray;
+
+    if Assigned(JAresult) then begin
+
+      // objeto com as informações
+      JOresult := JAresult.Items[0].GetValue<TJSONObject>();
+
+      if JOresult.FindValue('sucess').AsType<boolean> then begin
+
+        if ed_idpessoa.Tag > 0 then begin
+          Executar_GET( ed_idpessoa.Tag );
+          SetModo('NovoOuEditarOuExcluir');
+        end;
+        StatusBar1.Panels[4].Text := '';
+
+      end
+      else begin
+        Showmessage( JOresult.GetValue<string>('message','') );
+        StatusBar1.Panels[4].Text := JOresult.GetValue<string>('message','');
+      end;
+
+    end;
+  finally
+    if Assigned(JOoriginal) then begin
+      JOoriginal.DisposeOf;
+    end;
   end;
+end;
+
+procedure TfrmCliente.Wait_ms(ms: cardinal);
+var tk : cardinal;
+begin
+  tk := GetTickCount() + ms;
+  repeat
+    Application.ProcessMessages;
+    sleep(1);
+  until GetTickCount()>tk;
 end;
 
 end.

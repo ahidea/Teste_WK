@@ -9,6 +9,7 @@ uses
 
 begin
   ReportMemoryLeaksOnShutdown := true;
+
   Application.Initialize;
   Application.MainFormOnTaskbar := True;
   Application.CreateForm(TfrmCliente, frmCliente);

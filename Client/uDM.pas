@@ -11,17 +11,17 @@ uses
 
 type
   TDM = class(TDataModule)
-    RESTpessoa: TRESTClient;
-    RESTRequestGET: TRESTRequest;
-    RESTResponseGET: TRESTResponse;
     RESTRequestGET_ping: TRESTRequest;
     RESTResponseGET_ping: TRESTResponse;
-    RESTRequestPOST: TRESTRequest;
-    RESTResponsePOST: TRESTResponse;
-    RESTRequestPUT: TRESTRequest;
-    RESTResponsePUT: TRESTResponse;
-    RESTRequestDELETE: TRESTRequest;
-    RESTResponseDELETE: TRESTResponse;
+    RESTRequest_PUT: TRESTRequest;
+    RESTResponse_PUT: TRESTResponse;
+    RESTRequest_GET: TRESTRequest;
+    RESTResponse_GET: TRESTResponse;
+    REST_Pessoa: TRESTClient;
+    RESTRequest_POST: TRESTRequest;
+    RESTResponse_POST: TRESTResponse;
+    RESTRequest_DELETE: TRESTRequest;
+    RESTResponse_DELETE: TRESTResponse;
   private
     { Private declarations }
   public

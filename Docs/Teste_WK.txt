@@ -1,5 +1,5 @@
 
-Teste: 2022-10-19 a 2022-10-22
+Teste: 2022-10-19 a 2022-10-22, e refeito em 2022-10-28 e 2022-10-29
 
 1. Banco de dados:
 
@@ -74,108 +74,143 @@ COMMENT ON TABLE public.endereco_integracao IS 'teste WK';
 2. Servidor DataSnap com API Rest
 
 	
-2.1 Endpoint GET: http://localhost:9000/pessoa/id  
+2.1 Endpoint GET: http://localhost:9000/datasnap/rest/TServerMethods/Pessoa/id 
 
 Passando o "id" da pessoa, retorna:
 
 {
-    "status": 200,
-    "data": [
+    "result": [
         {
-            "idpessoa": 31,
-            "flnatureza": 1,
-            "dsdocumento": "000.000.1231-23",
-            "nmprimeiro": "Maria",
-            "nmsegundo": "Silva",
-            "dtregistro": "2022-10-21",
-            "dscep": "07092-080",
-            "idendereco": 9,
-            "dsuf": "SP",
-            "nmcidade": "Guarulhos",
-            "nmbairro": "Gopoúva",
-            "nmlogradouro": "Rua Capitão Daniel Guedes",
-            "dscomplemento": ""
+            "status": 200,
+            "data": [
+                {
+                    "idpessoa": 68,
+                    "flnatureza": "135",
+                    "dsdocumento": "87582475824",
+                    "nmprimeiro": "ZE",
+                    "nmsegundo": "CARIOCA",
+                    "dtregistro": "2022-10-28",
+                    "idendereco": 0,
+                    "dscep": "",
+                    "dsuf": "",
+                    "nmcidade": "",
+                    "nmbairro": "",
+                    "nmlogradouro": "",
+                    "dscomplemento": ""
+                }
+            ],
+            "sucess": true
         }
     ]
 }
 
-Em caso de erro:
+{"result":["{\"status\":200,\"data\":[{\"idpessoa\":31,\"flnatureza\":\"1\",\"dsdocumento\":\"000.000.1231-23\",\"nmprimeiro\":\"Maria\",\"nmsegundo\":\"Silva\",\"dtregistro\":\"2022-10-21\",\"idendereco\":9,\"dscep\":\"07092-080\",\"dsuf\":\"SP\",\"nmcidade\":\"Guarulhos\",\"nmbairro\":\"Gopo\u00FAva\",\"nmlogradouro\":\"Rua Capit\u00E3o Daniel Guedes\",\"dscomplemento\":\"\"}],\"sucess\":true}"]}
+
+Em caso de erro ou não encontrado, retorna:
 
 {
-    "status": 204,
-    "sucess": false,
-    "message": "not found"
+    "result": [
+        {
+            "status": 404,
+            "sucess": false,
+            "message": "not found"
+        }
+    ]
 }
 
-2.2 Endpoint POST: http://localhost:9000/pessoa
+
+2.2 Endpoint POST: http://localhost:9000/datasnap/rest/TServerMethods/Pessoa
   
 *** Consulta viacep.com.br/ws/_numero_CEP/json, para obter dados do endereço.
  
 Passando um json com os dados a cadastrar:
 
 {
-    "flnatureza": 1,
-    "dsdocumento": "000.000.0001-23",
-    "nmprimeiro": "José",
-    "nmsegundo": "Silva",
-    "cep": "07000-00"
+    "flnatureza":7,
+    "dsdocumento":"99.999.999/9999-99",
+    "nmprimeiro":"Alan",
+    "nmsegundo":"Turing",
+    "cep":"07092070"
 }
 
 Retorna:
 
 {
-    "status": 201,
-    "sucess": true,
-    "idpessoa": 33,
-    "idendereco": 11
+    "result": [
+        {
+            "status": 201,
+            "sucess": true,
+            "idpessoa": 73,
+            "idendereco": 42
+        }
+    ]
 }
 
 Em caso de erro, informa o erro encontrado:
 
 {
-    "status": 400,
-    "sucess": false,
-    "message": "campo 'cep' inválido"
+    "result": [
+        {
+            "status": 400,
+            "sucess": false,
+            "message": "campo 'cep' inválido"
+        }
+    ]
 }
 
-2.3 Endpoint PUT: http://localhost:9000/pessoa
+
+2.3 Endpoint PUT: http://localhost:9000/datasnap/rest/TServerMethods/Pessoa/id
 
 *** Consulta viacep.com.br/ws/_numero_CEP/json, para obter dados do endereço.
 
 Passando um json com os dados para alterar:
 
 {
-    "idpessoa": 123
-    "flnatureza": 1,
-    "dsdocumento": "000.000.0001-23",
-    "nmprimeiro": "José",
-    "nmsegundo": "Silva",
-    "cep": "07092-080"
+    "idpessoa":73,
+    "flnatureza":7,
+    "dsdocumento":"99.999.999/9999-99",
+    "nmprimeiro":"Alan",
+    "nmsegundo":"Turing",
+    "cep":"07092010"
 }
 
 Retorna:
 
 {
-    "status": 200,
-    "sucess": true
+    "result": [
+        {
+            "status": 200,
+            "sucess": true
+        }
+    ]
 }
+
 
 Em caso de erro, informa o erro encontrado:
 
 {
-    "status": 400,
-    "sucess": false,
-    "message": "campo 'cep' inválido"
+    "result": [
+        {
+            "status": 400,
+            "sucess": false,
+            "message": "campo 'cep' inválido"
+        }
+    ]
 }
 
-2.4 Endpoint DELETE: http://localhost:9000/pessoa/id  
+
+2.4 Endpoint DELETE: http://localhost:9000/datasnap/rest/TServerMethods/Pessoa/id
 
 passando o "id" da pessoa, retorna:
 
 {
-    "status": 200,
-    "sucess": true,
-    "message": "registro apagado"
+    "result": [
+        {
+            "status": 200,
+            "sucess": true,
+            "message": "registro apagado"
+        }
+    ]
 }
 
 
@@ -186,10 +221,9 @@ Aplicação que permite:
 	- Cadastrar
 	- Alterar
 	- Excluir
-	- Pesquisar, por id
-	
-	- Processamento em Lote de arquivo CSV (ainda não foi testato)
-	
+	- Pesquisar, por id	
+	- Processamento em Lote de arquivo CSV, gera arquivo
+	  de saida com itens não carrgados ou com erro.
+	  Nome do arquivo gerado: nome_original + .invalidos
 	- Threads, para atualização em lote (pendente)
-
 

@@ -1,0 +1,146 @@
+unit uServerMethods;
+
+interface
+
+uses System.SysUtils, System.Classes, Datasnap.DSServer, Datasnap.DSAuth,
+  uPessoa, System.JSON;
+
+type
+{$METHODINFO ON}
+  TServerMethods = class(TComponent)
+    constructor Create(AOwner: TComponent); override;
+    destructor Destroy; override;
+
+  private
+    FPessoa : TPessoa;
+
+  public
+    { Public declarations }
+    function EchoString(Value: string): string;
+    function ReverseString(Value: string): string;
+
+    // GET
+    // pesquisa pessoa e devolve dados
+    // exemplo: http://localhost:9000/datasnap/rest/TServerMethods/Pessoa/id
+    function Pessoa(const idpessoa: integer) : TJSONObject;
+
+    // POST
+    // cadastrar uma pessoa, e seu endereço
+    function UpdatePessoa : TJSONObject;
+
+    // PUT
+    // atualizar dados sobre uma pessoa
+    function AcceptPessoa(const idpessoa: integer) : TJSONObject;
+
+    // DELETE
+    // deletar dados da pessoa idpessoa
+    function CancelPessoa(const idpessoa: integer) : TJSONObject;
+
+    // informa se está rodando
+    // exemplo: http://localhost:9000/datasnap/rest/TServerMethods/IsRunning
+    // retorno: {"result":["Running"]}
+    function IsRunning: string;
+
+  end;
+{$METHODINFO OFF}
+
+implementation
+
+
+uses System.StrUtils, Web.HTTPApp, Datasnap.DSHTTPWebBroker, Data.DBXPlatform, Vcl.Dialogs;
+
+// PUT
+// atualizar dados sobre uma pessoa
+function TServerMethods.AcceptPessoa(const idpessoa: integer): TJSONObject;
+var WM: TWebModule;
+    JO: TJSONObject;
+    JA: TJSONArray;
+    msgerro: string;
+begin
+showmessage('oi 0');
+  WM := GetDataSnapWebModule;
+  if WM.Request.Content.IsEmpty then begin
+    GetInvocationMetaData().ResponseCode := 204;
+    Abort;
+  end;
+showmessage('oi 1');
+  JA := TJSONArray.ParseJSONValue(TEncoding.UTF8.GetBytes( WM.Request.Content ), 0) as TJSONArray;
+showmessage( JA.ToString );
+  JO := TJSONObject.ParseJSONValue(TEncoding.UTF8.GetBytes( WM.Request.Content ), 0) as TJSONObject;
+showmessage(JO.ToString);
+
+  Result := FPessoa.PUT__pessoa( idpessoa, JO.ToString, msgerro );
+  GetInvocationMetadata().ResponseCode := 200;
+//  GetInvocationMetadata().ResponseContent := Result.ToString;
+end;
+
+// DELETE
+// deletar dados da pessoa idpessoa
+function TServerMethods.CancelPessoa(const idpessoa: integer): TJSONObject;
+var msgerro: string;
+begin
+  Result := FPessoa.DELETE__pessoa( idpessoa, msgerro );
+  GetInvocationMetadata().ResponseCode := 200;
+//  GetInvocationMetadata().ResponseContent := Result.ToString;
+end;
+
+constructor TServerMethods.Create(AOwner: TComponent);
+begin
+  inherited Create(AOwner);
+  FPessoa := TPessoa.Create;
+end;
+
+destructor TServerMethods.Destroy;
+begin
+  FPessoa.DisposeOf;
+  inherited;
+end;
+
+function TServerMethods.EchoString(Value: string): string;
+begin
+  Result := Value;
+end;
+
+function TServerMethods.IsRunning: string;
+begin
+  Result := 'Running';
+end;
+
+// GET
+// pesquisa pessoa e devolve dados
+function TServerMethods.Pessoa(const idpessoa: integer): TJSONObject;
+var msgerro: string;
+begin
+  Result := FPessoa.GET__pessoa( idpessoa, msgerro );
+  GetInvocationMetadata().ResponseCode := 200;
+//  GetInvocationMetadata().ResponseContent := Result.ToString;
+end;
+
+function TServerMethods.ReverseString(Value: string): string;
+begin
+  Result := System.StrUtils.ReverseString(Value);
+end;
+
+// POST
+// cadastrar uma pessoa, e seu endereço
+function TServerMethods.UpdatePessoa: TJSONObject;
+var WM: TWebModule;
+    JO: TJSONObject;
+    msgerro: string;
+begin
+  WM := GetDataSnapWebModule;
+  if WM.Request.Content.IsEmpty then begin
+    GetInvocationMetaData().ResponseCode := 204;
+	  Result := FPessoa.Monta_Json_Erro(204,false,'invalid data');
+    Abort;
+  end;
+
+  JO := TJSONObject.ParseJSONValue(TEncoding.UTF8.GetBytes( WM.Request.Content ), 0) as TJSONObject;
+
+  Result := FPessoa.POST__pessoa( JO.ToString, msgerro );
+  GetInvocationMetadata().ResponseCode := 201;
+//  GetInvocationMetadata().ResponseContent := Result.ToString;
+end;
+
+end.
+

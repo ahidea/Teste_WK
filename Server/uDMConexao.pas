@@ -28,6 +28,7 @@ type
 
     procedure DataModuleCreate(Sender: TObject);
     procedure DataModuleDestroy(Sender: TObject);
+
     procedure FDConnection1BeforeConnect(Sender: TObject);
 
   private

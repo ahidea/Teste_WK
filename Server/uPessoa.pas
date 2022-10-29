@@ -3,33 +3,48 @@ unit uPessoa;
 interface
 
 uses
-  System.SysUtils, System.Classes, System.Json, DataSnap.DSProviderDataModuleAdapter,
-  Datasnap.DSServer, Datasnap.DSAuth, FireDAC.Stan.Intf, FireDAC.Stan.Option,
-  FireDAC.Stan.Param, FireDAC.Stan.Error, FireDAC.DatS, FireDAC.Phys.Intf,
-  FireDAC.DApt.Intf, FireDAC.Stan.Async, FireDAC.DApt, FireDAC.Comp.Client,
-  Data.DB, FireDAC.Comp.DataSet;
+  System.JSON;
 
 type
-  TDMPessoa = class(TDSServerModule)
-    qryPessoa: TFDQuery;
-    qryPessoaidpessoa: TLargeintField;
-    qryPessoaflnatureza: TSmallintField;
-    qryPessoadsdocumento: TWideStringField;
-    qryPessoanmprimeiro: TWideStringField;
-    qryPessoanmsegundo: TWideStringField;
-    qryPessoadtregistro: TDateField;
-    qryPessoaidendereco: TLargeintField;
-    qryPessoadscep: TWideStringField;
-    qryPessoadsuf: TWideStringField;
-    qryPessoanmcidade: TWideStringField;
-    qryPessoanmbairro: TWideStringField;
-    qryPessoanmlogradouro: TWideStringField;
-    qryPessoadscomplemento: TWideStringField;
+  TPessoa = class
+    constructor Create;
 
   public
 
-    // devolve nil se não for localizado
-    function Pessoa( aPessoaID: integer; var Dados: TJSONObject ) : boolean;
+    // remove caracteres não numéricos
+    function OnlyNumbers(str : string) : string;
+
+    // json erro
+    function Monta_Json_Erro(aStatus: integer; aSucess: boolean; aMessage: string; aINDEXLOTE: integer = -1): TJSONObject;
+
+    // json POST
+    function Monta_Json_POST_ok(aStatus: integer; aSucess: boolean; idpessoa, idendereco: integer; aINDEXLOTE: integer = -1): TJSONObject;
+
+    // json PUT
+    function Monta_Json_PUT_ok(aStatus: integer; aSucess: boolean): TJSONObject;
+
+    // json DELETE
+    function Monta_Json_DELETE_ok(aStatus: integer; aSucess: boolean; aMessage: string): TJSONObject;
+
+  public // endpoints
+
+    // pesquisa pessoa idpessoa e devolve json com os dados
+    // em caso de erro: msgerro <> '', e status no json de retorno <> 200
+    function GET_pessoa(idpessoa: integer; out msgerro: string): TJSONObject;
+
+    // registrar uma nova pessoa no BD, pesquisa endereço para pegar detalhes
+    // em caso de erro: msgerro <> '', e status no json de retorno <> 201
+    function POST_pessoa( aJson: string; out msgerro: string): TJSONObject;
+
+    // registrar alteração de dados no BD, pesquisa endereço para atualizar
+    // em caso de erro: msgerro <> '', e status no json de retorno <> 200
+    function PUT_pessoa(idpessoa: integer; aJson: string; out msgerro: string): TJSONObject;
+
+    // deleta pessoa idpessoa
+    // em caso de erro: msgerro <> '', e status no json de retorno <> 200
+    function DELETE_pessoa(idpessoa: integer; out msgerro: string): TJSONObject;
+
+  public // interno
 
     // Retorna idpessoa
     // se erro, retorna 0;
@@ -53,24 +68,25 @@ type
     // Apaga endereço da pessoa
     function ApagarEndereco( idpessoa: integer ) : boolean;
 
+    // Apagar todos os dados da pessoa
     function ApagarPessoa( idpessoa: integer ) : boolean;
 
   end;
 
-var
-  DMPessoa: TDMPessoa;
+var Pessoa: TPessoa;
 
 implementation
 
-{.%CLASSGROUP 'System.Classes.TPersistent'}
+uses
+  uDMConexao, FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Param,
+  FireDAC.Stan.Error, FireDAC.DatS, FireDAC.Phys.Intf, FireDAC.DApt.Intf,
+  FireDAC.Stan.Async, FireDAC.DApt, Data.DB, FireDAC.Comp.DataSet,
+  FireDAC.Comp.Client, System.SysUtils, System.Classes, System.JSON.Builders,
+  System.JSON.Writers, System.JSON.Types, System.JSON.Readers, Vcl.Dialogs;
 
-uses uDMConexao;
+{ TPessoa }
 
-{$R *.dfm}
-
-{ TWSPessoa }
-
-function TDMPessoa.AlterarEndereco(idendereco: integer; cep, dsuf, nmcidade, nmbairro, nmlogradouro, dscomplemento: string): boolean;
+function TPessoa.AlterarEndereco(idendereco: integer; cep, dsuf, nmcidade, nmbairro, nmlogradouro, dscomplemento: string): boolean;
 var Q : TFDQuery;
 begin
   Result := false;
@@ -94,14 +110,13 @@ begin
     except
       DataModule1.FDConnection1.Rollback;
     end;
-    Q.Close;
 
   finally
     FreeAndNil( Q );
   end;
 end;
 
-function TDMPessoa.AlterarPessoa(idpessoa, flnatureza: integer; dsdocumento, nmprimeiro, nmsegundo: string): boolean;
+function TPessoa.AlterarPessoa(idpessoa, flnatureza: integer; dsdocumento, nmprimeiro, nmsegundo: string): boolean;
 var Q : TFDQuery;
 begin
   Result := false;
@@ -130,10 +145,10 @@ begin
   end;
 end;
 
-function TDMPessoa.ApagarEndereco(idpessoa: integer): boolean;
+// Apaga endereço da pessoa
+function TPessoa.ApagarEndereco(idpessoa: integer): boolean;
 var Q : TFDQuery;
 begin
-  Result := false;
   Q := TFDQuery.Create( nil );
   try
     Q.Connection := DataModule1.FDConnection1;
@@ -146,10 +161,10 @@ begin
   end;
 end;
 
-function TDMPessoa.ApagarPessoa(idpessoa: integer): boolean;
+// Apagar todos os dados da pessoa
+function TPessoa.ApagarPessoa(idpessoa: integer): boolean;
 var Q : TFDQuery;
 begin // apagar pessoa e endereco (cascade)
-  Result := false;
   Q := TFDQuery.Create( nil );
   try
     Q.Connection := DataModule1.FDConnection1;
@@ -160,14 +175,263 @@ begin // apagar pessoa e endereco (cascade)
   end;
 end;
 
+constructor TPessoa.Create;
+begin
+  //
+end;
+
+function TPessoa.DELETE_pessoa(idpessoa: integer; out msgerro: string): TJSONObject;
+begin // deletar pessoa
+  Result := nil;
+
+  if idpessoa <= 0 then begin
+      // erro
+      msgerro := 'id invalid';
+      Result := Monta_Json_Erro( 400, false, msgerro );
+      exit;
+  end;
+
+  if (idpessoa > 0) and ApagarPessoa( idpessoa ) then begin
+    // sucesso
+    msgerro := '';
+    Result := Monta_Json_DELETE_ok( 200, true, 'registro apagado' );
+    exit;
+  end
+  else begin
+    // algo saiu errado
+    msgerro := 'not found';
+    Result := Monta_Json_Erro( 404, false, msgerro );
+    exit;
+  end;
+end;
+
+function TPessoa.GET_pessoa(idpessoa: integer; out msgerro: string): TJSONObject;
+var Q: TFDQuery;
+    JTW: TJSONtextWriter;
+    JOB: TJSONObjectBuilder;
+begin // obtem dados da pessoa idpessoa
+  Result := nil;
+  msgerro := '';
+
+  JTW := TJSONtextWriter.Create( TStringWriter.Create, True );
+  JOB := TJSONObjectBuilder.Create( JTW );
+  try
+
+    if idpessoa <= 0 then begin
+      // erro
+      msgerro := 'id invalid';
+      Result := Monta_Json_Erro( 400, false, msgerro );
+      exit;
+    end;
+
+    Q := TFDQuery.Create(nil);
+    try
+      Q.Connection := uDMConexao.DataModule1.FDConnection1;
+      Q.Open('SELECT '
+            +'  a.idpessoa '
+            +', a.flnatureza '
+            +', a.dsdocumento '
+            +', a.nmprimeiro '
+            +', a.nmsegundo '
+            +', a.dtregistro '
+            +', e.idendereco '
+            +', e.dscep '
+            +', ei.dsuf '
+            +', ei.nmcidade '
+            +', ei.nmbairro '
+            +', ei.nmlogradouro '
+            +', ei.dscomplemento '
+            +'FROM pessoa as a '
+            +'     LEFT JOIN endereco as e ON e.idpessoa = a.idpessoa '
+            +'     LEFT JOIN endereco_integracao as ei ON ei.idendereco = e.idendereco '
+            +'WHERE a.idpessoa = '+IntToStr( idpessoa ));
+
+      if not Q.Eof then begin
+
+        JTW.WriteStartObject; {O}
+        JTW.WritePropertyName('status'); JTW.WriteValue( 200 );
+        JTW.WritePropertyName('data');
+        JTW.WriteStartArray; {A}
+        JTW.WriteStartObject; {OO}
+        JTW.WritePropertyName('idpessoa');
+        JTW.WriteValue( Q.FieldByName('idpessoa').AsInteger );
+        JTW.WritePropertyName('flnatureza');
+        JTW.WriteValue( Q.FieldByName('flnatureza').AsString );
+        JTW.WritePropertyName('dsdocumento');
+        JTW.WriteValue( Q.FieldByName('dsdocumento').AsString );
+        JTW.WritePropertyName('nmprimeiro');
+        JTW.WriteValue( Q.FieldByName('nmprimeiro').AsString );
+        JTW.WritePropertyName('nmsegundo');
+        JTW.WriteValue( Q.FieldByName('nmsegundo').AsString );
+        JTW.WritePropertyName('dtregistro');
+        JTW.WriteValue( FormatDateTime('YYYY-MM-DD', Q.FieldByName('dtregistro').AsDateTime ) );
+        JTW.WritePropertyName('idendereco');
+        JTW.WriteValue( Q.FieldByName('idendereco').AsInteger );
+        JTW.WritePropertyName('dscep');
+        JTW.WriteValue( Q.FieldByName('dscep').AsString );
+        JTW.WritePropertyName('dsuf');
+        JTW.WriteValue( Q.FieldByName('dsuf').AsString );
+        JTW.WritePropertyName('nmcidade');
+        JTW.WriteValue( Q.FieldByName('nmcidade').AsString );
+        JTW.WritePropertyName('nmbairro');
+        JTW.WriteValue( Q.FieldByName('nmbairro').AsString );
+        JTW.WritePropertyName('nmlogradouro');
+        JTW.WriteValue( Q.FieldByName('nmlogradouro').AsString );
+        JTW.WritePropertyName('dscomplemento');
+        JTW.WriteValue( Q.FieldByName('dscomplemento').AsString );
+        JTW.WriteEndObject; {OO}
+        JTW.WriteEndArray; {A}
+        JTW.WritePropertyName('sucess'); JTW.WriteValue( true );
+        JTW.WriteEndObject; {O}
+
+        Result := TJSONObject.ParseJSONValue(TEncoding.UTF8.GetBytes( JTW.Writer.ToString ), 0) as TJSONObject;
+        exit;
+
+      end
+      else begin
+        // erro
+        msgerro := 'not found';
+        Result := Monta_Json_Erro( 404, false, msgerro );
+        exit;
+      end;
+
+    finally
+      Q.DisposeOf;
+    end;
+
+  finally
+    JOB.DisposeOf;
+    JTW.DisposeOf;
+  end;
+end;
+
+
+function TPessoa.Monta_Json_DELETE_ok(aStatus: integer; aSucess: boolean; aMessage: string): TJSONObject;
+var JTW: TJSONtextWriter;
+    JOB: TJSONObjectBuilder;
+begin
+  JTW := TJSONtextWriter.Create( TStringWriter.Create, True );
+  JOB := TJSONObjectBuilder.Create( JTW );
+  try
+    JTW.WriteStartObject;
+    JTW.WritePropertyName('status');
+    JTW.WriteValue( aStatus );
+    JTW.WritePropertyName('sucess');
+    JTW.WriteValue( aSucess );
+    JTW.WritePropertyName('message');
+    JTW.WriteValue(aMessage);
+    JTW.WriteEndObject;
+
+    Result := TJSONObject.ParseJSONValue(TEncoding.UTF8.GetBytes( JTW.Writer.ToString ), 0) as TJSONObject;
+
+  finally
+    JOB.DisposeOf;
+    JTW.DisposeOf;
+  end;
+end;
+
+function TPessoa.Monta_Json_Erro(aStatus: integer; aSucess: boolean; aMessage: string; aINDEXLOTE: integer = -1): TJSONObject;
+var JTW: TJSONtextWriter;
+    JOB: TJSONObjectBuilder;
+begin
+  Result := nil;
+  JTW := TJSONtextWriter.Create( TStringWriter.Create, True );
+  JOB := TJSONObjectBuilder.Create( JTW );
+  try
+    JTW.WriteStartObject;
+    JTW.WritePropertyName('status');
+    JTW.WriteValue( aStatus );
+    JTW.WritePropertyName('sucess');
+    JTW.WriteValue( aSucess );
+    JTW.WritePropertyName('message');
+    JTW.WriteValue(aMessage);
+    if aINDEXLOTE > -1 then begin
+      JTW.WritePropertyName('INDEXLOTE');
+      JTW.WriteValue( aINDEXLOTE );
+    end;
+    JTW.WriteEndObject;
+
+    Result := TJSONObject.ParseJSONValue(TEncoding.UTF8.GetBytes( JTW.Writer.ToString ), 0) as TJSONObject;
+
+  finally
+    JOB.DisposeOf;
+    JTW.DisposeOf;
+  end;
+end;
+
+function TPessoa.Monta_Json_POST_ok(aStatus: integer; aSucess: boolean; idpessoa, idendereco: integer; aINDEXLOTE: integer = -1): TJSONObject;
+var JTW: TJSONtextWriter;
+    JOB: TJSONObjectBuilder;
+begin
+  JTW := TJSONtextWriter.Create( TStringWriter.Create, True );
+  JOB := TJSONObjectBuilder.Create( JTW );
+  try
+    JTW.WriteStartObject;
+    JTW.WritePropertyName('status');
+    JTW.WriteValue( aStatus );
+    JTW.WritePropertyName('sucess');
+    JTW.WriteValue( aSucess );
+    JTW.WritePropertyName('idpessoa');
+    JTW.WriteValue( idpessoa );
+    JTW.WritePropertyName('idendereco');
+    JTW.WriteValue( idendereco );
+    if aINDEXLOTE > -1 then begin
+      JTW.WritePropertyName('INDEXLOTE');
+      JTW.WriteValue( aINDEXLOTE );
+    end;
+    JTW.WriteEndObject;
+
+    Result := TJSONObject.ParseJSONValue(TEncoding.UTF8.GetBytes( JTW.Writer.ToString ), 0) as TJSONObject;
+
+  finally
+    JOB.DisposeOf;
+    JTW.DisposeOf;
+  end;
+end;
+
+
+function TPessoa.Monta_Json_PUT_ok(aStatus: integer; aSucess: boolean): TJSONObject;
+var JTW: TJSONtextWriter;
+    JOB: TJSONObjectBuilder;
+begin
+  JTW := TJSONtextWriter.Create( TStringWriter.Create, True );
+  JOB := TJSONObjectBuilder.Create( JTW );
+  try
+    JTW.WriteStartObject;
+    JTW.WritePropertyName('status');
+    JTW.WriteValue( aStatus );
+    JTW.WritePropertyName('sucess');
+    JTW.WriteValue( aSucess );
+    JTW.WriteEndObject;
+
+    Result := TJSONObject.ParseJSONValue(TEncoding.UTF8.GetBytes( JTW.Writer.ToString ), 0) as TJSONObject;
+
+  finally
+    JOB.DisposeOf;
+    JTW.DisposeOf;
+  end;
+end;
+
+
+function TPessoa.OnlyNumbers(str: string): string;
+var x : integer;
+begin
+  Result := '';
+  for x := 0 to Length(str) - 1 do begin
+    //era: if (str.Chars[x] In ['0'..'9']) then begin
+    if CharInSet( str.Chars[x], ['0'..'9']) then begin
+      Result := Result + str.Chars[x];
+    end;
+  end;
+end;
+
 // Pesquisa idendereco de uma pessoa de retorna:
 // >0: idendereco da pessoa
 //  0: não existe endereço definido
 // -1: endereco invalido
-function TDMPessoa.Pesquisar_idendereco(idpessoa: integer): integer;
+function TPessoa.Pesquisar_idendereco(idpessoa: integer): integer;
 var Q : TFDQuery;
 begin
-  Result := 0;
   Q := TFDQuery.Create( nil );
   try
     Q.Connection := DataModule1.FDConnection1;
@@ -201,75 +465,356 @@ begin
   finally
     FreeAndNil( Q );
   end;
-
-
-
-(*
-SELECT
-  a.idpessoa
-, coalesce(e.idendereco,0) as idendereco_em_endereco
-, coalesce(ei.idendereco,0) as idendereco_em_endereco_integracao
-, coalesce(e.idendereco,-1) = coalesce(ei.idendereco,-2) idendereco_valido
-FROM pessoa as a
-     LEFT JOIN endereco as e ON e.idpessoa = a.idpessoa
-     LEFT JOIN endereco_integracao as ei ON ei.idendereco = e.idendereco
-WHERE a.idpessoa = @@@
-*)
 end;
 
-function TDMPessoa.Pessoa(aPessoaID: integer; var Dados: TJSONObject ) : boolean;
-var sql : string;
-    cep : string;
-    idendereco: integer;
-begin
-  sql:='SELECT '#13
-      +'  a.idpessoa '#13
-      +', a.flnatureza '#13
-      +', a.dsdocumento '#13
-      +', a.nmprimeiro '#13
-      +', a.nmsegundo '#13
-      +', a.dtregistro '#13
-      +', e.idendereco '#13
-      +', e.dscep '#13
-      +', ei.dsuf '#13
-      +', ei.nmcidade '#13
-      +', ei.nmbairro '#13
-      +', ei.nmlogradouro '#13
-      +', ei.dscomplemento '#13
-      +'FROM pessoa as a '#13
-      +'     LEFT JOIN endereco as e ON e.idpessoa = a.idpessoa '#13
-      +'     LEFT JOIN endereco_integracao as ei ON ei.idendereco = e.idendereco '#13
-      +'WHERE a.idpessoa = ' + IntToStr( aPessoaID );
 
-  qryPessoa.Close;
-  qryPessoa.Open( sql );
-  if qryPessoa.eof then begin
-    Dados := nil;
-    Result := false;
+function TPessoa.POST_pessoa(aJson: string; out msgerro: string): TJSONObject;
+var SR: TStringReader;
+    JTR : TJSONTextReader;
+    flnatureza, idpessoa, idendereco, INDEXLOTE: integer;
+    dsdocumento,nmprimeiro,nmsegundo,cep: string;
+    dsuf,nmcidade,nmbairro,nmlogradouro,dscomplemento: string;
+begin // obtem dados do cep recebido e cadastra pessoa e endereço
+  // espera um json:
+  //  {
+  //      "flnatureza": 1,
+  //      "dsdocumento": "000.000.0001-23",
+  //      "nmprimeiro": "José",
+  //      "nmsegundo": "Silva",
+  //      "cep": "07092-070",
+  //      "INDEXLOTE": 123         <--- esse item só existe me cadastramento em lote, e deve ser retornado
+  //  }
+
+  Result := nil;
+  msgerro := '';
+
+  // valores iniciais
+  flnatureza := 999999999;
+  dsdocumento := '';
+  nmprimeiro := '';
+  nmsegundo := '';
+  cep := '';
+  INDEXLOTE := -1; // cadastramento em lote
+
+  // ler json recebido e encontrar cada campo para validar
+  SR  := TStringReader.Create( aJSON );
+  JTR := TJSONTextReader.Create( SR );
+  try
+    // procurar o inicio do object
+    while JTR.TokenType <> TJSONToken.StartObject do begin
+      JTR.Read;
+    end;
+    JTR.Read; // consumir '{'
+    // pegar os campos
+    if JTR.Value.AsString.Equals('flnatureza') then begin
+      JTR.Read;
+      flnatureza := JTR.Value.AsInteger;
+      JTR.Read;
+    end;
+    if JTR.Value.AsString.Equals('dsdocumento') then begin
+      JTR.Read;
+      dsdocumento := JTR.Value.AsString;
+      JTR.Read;
+    end;
+    if JTR.Value.AsString.Equals('nmprimeiro') then begin
+      JTR.Read;
+      nmprimeiro := JTR.Value.AsString;
+      JTR.Read;
+    end;
+    if JTR.Value.AsString.Equals('nmsegundo') then begin
+      JTR.Read;
+      nmsegundo := JTR.Value.AsString;
+      JTR.Read;
+    end;
+    if JTR.Value.AsString.Equals('cep') then begin
+      JTR.Read;
+      cep := JTR.Value.AsString;
+      JTR.Read;
+    end;
+    // esse campo só existem em cadastramento em lote
+    if JTR.Value.AsString.Equals('INDEXLOTE') then begin
+      JTR.Read;
+      INDEXLOTE := JTR.Value.AsInteger;
+      JTR.Read;
+    end;
+
+  finally
+    JTR.DisposeOf;
+    SR.DisposeOf;
+  end;
+
+  // validar os campos lidos
+
+  if flnatureza = 999999999 then begin
+    msgerro := 'campo ''flnatureza'' é obrigatório';
+    Result := Monta_Json_Erro( 400, false, msgerro, INDEXLOTE );
     exit;
   end;
 
-  Dados := TJSONObject.Create;
-  Dados.AddPair('idpessoa', qryPessoaidpessoa.AsInteger );
-  Dados.AddPair('flnatureza', qryPessoaflnatureza.AsInteger );
-  Dados.AddPair('dsdocumento', qryPessoadsdocumento.AsString );
-  Dados.AddPair('nmprimeiro', qryPessoanmprimeiro.AsString );
-  Dados.AddPair('nmsegundo', qryPessoanmsegundo.AsString );
-  Dados.AddPair('dtregistro', FormatDateTime('YYYY-MM-DD', qryPessoadtregistro.AsDateTime ) );
-  Dados.AddPair('dscep', qryPessoadscep.AsString );
-  Dados.AddPair('idendereco', qryPessoaidendereco.AsInteger );
-  Dados.AddPair('dsuf', qryPessoadsuf.AsString );
-  Dados.AddPair('nmcidade', qryPessoanmcidade.AsString );
-  Dados.AddPair('nmbairro', qryPessoanmbairro.AsString );
-  Dados.AddPair('nmlogradouro', qryPessoanmlogradouro.AsString );
-  Dados.AddPair('dscomplemento', qryPessoadscomplemento.AsString );
 
-  Result := true;
+  nmprimeiro := trim(nmprimeiro);
+  if nmprimeiro = '' then begin
+    msgerro := 'campo ''nmprimeiro'' é obrigatório';
+    Result := Monta_Json_Erro( 400, false, msgerro, INDEXLOTE );
+    exit;
+  end;
 
-  qryPessoa.Close;
+  nmsegundo := trim(nmsegundo);
+  if nmsegundo = '' then begin
+    msgerro := 'campo ''nmsegundo'' é obrigatório';
+    Result := Monta_Json_Erro( 400, false, msgerro, INDEXLOTE );
+    exit;
+  end;
+
+  cep := OnlyNumbers(cep);
+  if cep = '' then begin
+    msgerro := 'campo ''cep'' é obrigatório';
+    Result := Monta_Json_Erro( 400, false, msgerro, INDEXLOTE );
+    exit;
+  end
+  else if length(cep) <> 8 then begin
+    msgerro := 'campo ''cep'' inválido';
+    Result := Monta_Json_Erro( 400, false, msgerro, INDEXLOTE );
+    exit;
+  end
+  else begin
+    // pesquisa cep, e obtem campos necessários
+    if not DataModule1.Consultar_WS_ViaCEP(cep,dsuf,nmcidade,nmbairro,nmlogradouro,dscomplemento) then  begin
+      // erro
+      msgerro := 'cep não existe';
+      Result := Monta_Json_Erro( 400, false, msgerro, INDEXLOTE );
+      exit;
+    end;
+  end;
+
+  // registrar //
+
+  idpessoa := RegistrarPessoa( flnatureza, dsdocumento, nmprimeiro, nmsegundo );
+
+  if idpessoa <= 0 then begin
+    // erro
+    msgerro := 'erro ao cadastrar pessoa';
+    Result := Monta_Json_Erro( 500, false, msgerro, INDEXLOTE );
+    exit;
+  end
+  else begin
+    // pessoa: OK --> cadastrar endereço
+
+    idendereco := RegistrarEndereco( idpessoa, cep, dsuf, nmcidade, nmbairro, nmlogradouro, dscomplemento );
+
+    if idendereco <= 0 then begin
+      // erro
+      msgerro := 'erro ao cadastrar endereço';
+      Result := Monta_Json_Erro( 500, false, msgerro, INDEXLOTE );
+      exit;
+    end;
+
+  end;
+
+  // endereço OK //
+
+  msgerro := '';
+  Result := Monta_Json_POST_ok( 201, true, idpessoa, idendereco, INDEXLOTE );
+
 end;
 
-function TDMPessoa.RegistrarEndereco(idpessoa: integer; cep, dsuf, nmcidade, nmbairro, nmlogradouro, dscomplemento: string): integer;
+
+function TPessoa.PUT_pessoa(idpessoa: integer; aJson: string; out msgerro: string): TJSONObject;
+var SR: TStringReader;
+    JTR : TJSONTextReader;
+    idpessoa_tmp, flnatureza, idendereco: integer;
+    dsdocumento,nmprimeiro,nmsegundo,cep: string;
+    dsuf,nmcidade,nmbairro,nmlogradouro,dscomplemento: string;
+begin // Alterar cadastro de uma pessoa
+  // espera um json:
+  //    {
+  //        "idpessoa": 123
+  //        "flnatureza": 1,
+  //        "dsdocumento": "000.000.0001-23",
+  //        "nmprimeiro": "José",
+  //        "nmsegundo": "Silva",
+  //        "cep": "07092-080"
+  //    }
+
+  Result := nil;
+  msgerro := '';
+
+  // valores iniciais
+  idpessoa_tmp := 0;
+  flnatureza := 999999999;
+  dsdocumento := '';
+  nmprimeiro := '';
+  nmsegundo := '';
+  cep := '';
+
+  // ler json recebido e encontrar cada campo para validar
+  SR  := TStringReader.Create( aJSON );
+  JTR := TJSONTextReader.Create( SR );
+  try
+    // procurar o inicio do object
+    while JTR.TokenType <> TJSONToken.StartObject do begin
+      JTR.Read;
+    end;
+    JTR.Read; // consumir '{'
+    // pegar os campos
+    if JTR.Value.AsString.Equals('idpessoa') then begin
+      JTR.Read;
+      idpessoa_tmp := JTR.Value.AsInteger;
+      JTR.Read;
+    end;
+    if JTR.Value.AsString.Equals('flnatureza') then begin
+      JTR.Read;
+      flnatureza := JTR.Value.AsInteger;
+      JTR.Read;
+    end;
+    if JTR.Value.AsString.Equals('dsdocumento') then begin
+      JTR.Read;
+      dsdocumento := JTR.Value.AsString;
+      JTR.Read;
+    end;
+    if JTR.Value.AsString.Equals('nmprimeiro') then begin
+      JTR.Read;
+      nmprimeiro := JTR.Value.AsString;
+      JTR.Read;
+    end;
+    if JTR.Value.AsString.Equals('nmsegundo') then begin
+      JTR.Read;
+      nmsegundo := JTR.Value.AsString;
+      JTR.Read;
+    end;
+    if JTR.Value.AsString.Equals('cep') then begin
+      JTR.Read;
+      cep := JTR.Value.AsString;
+      JTR.Read;
+    end;
+
+  finally
+    JTR.DisposeOf;
+    SR.DisposeOf;
+  end;
+
+  // validar os campos lidos //
+
+  // validar o idpessoa
+  if (idpessoa <= 0) or (idpessoa <> idpessoa_tmp) then begin
+    msgerro := 'campo ''idpessoa'' inválido';
+    Result := Monta_Json_Erro( 400, false, msgerro );
+    exit;
+  end;
+
+  if flnatureza = 999999999 then begin
+    msgerro := 'campo ''flnatureza'' é obrigatório';
+    Result :=Monta_Json_Erro( 400, false, msgerro );
+    exit;
+  end;
+
+  nmprimeiro := trim(nmprimeiro);
+  if nmprimeiro = '' then begin
+    msgerro := 'campo ''nmprimeiro'' é obrigatório';
+    Result := Monta_Json_Erro( 400, false, msgerro );
+    exit;
+  end;
+
+  nmsegundo := trim(nmsegundo);
+  if nmsegundo = '' then begin
+    msgerro := 'campo ''nmsegundo'' é obrigatório';
+    Result := Monta_Json_Erro( 400, false, msgerro );
+    exit;
+  end;
+
+  cep := OnlyNumbers(cep);
+  if cep = '' then begin
+    msgerro := 'campo ''cep'' é obrigatório';
+    Result := Monta_Json_Erro( 400, false, msgerro );
+    exit;
+  end
+  else if length(cep) <> 8 then begin
+    msgerro := 'campo ''cep'' inválido';
+    Result := Monta_Json_Erro( 400, false, msgerro );
+    exit;
+  end
+  else begin
+    // pesquisa cep, e obtem campos necessários
+    if not DataModule1.Consultar_WS_ViaCEP(cep,dsuf,nmcidade,nmbairro,nmlogradouro,dscomplemento) then  begin
+      // erro
+      msgerro := 'cep não existe';
+      Result := Monta_Json_Erro( 400, false, msgerro );
+      exit;
+    end;
+  end;
+
+  // Registrar alterações
+
+  if AlterarPessoa( idpessoa, flnatureza, dsdocumento, nmprimeiro, nmsegundo ) then begin
+    // cadastro da pessoa OK --> atualizar endereco
+
+    idendereco := Pesquisar_idendereco( idpessoa );
+
+    // >0  --> atualizar
+    // =0  --> não há endereço --> cadastrar
+    // <0  --> endereco invalido --> recadastrar endereço
+
+    if idendereco > 0 then begin
+      // atualizar
+      if not AlterarEndereco( idendereco, cep, dsuf, nmcidade, nmbairro, nmlogradouro, dscomplemento ) then begin
+        // erro
+        msgerro := 'erro ao gravar dados da pessoa/endereço';
+        Result := Monta_Json_Erro( 500, false, msgerro );
+        exit;
+      end;
+      // ok
+    end
+    else if idendereco = 0 then begin
+      // não há endereço --> cadastrar
+      idendereco := RegistrarEndereco( idpessoa, cep, dsuf, nmcidade, nmbairro, nmlogradouro, dscomplemento );
+      if idendereco <= 0 then begin
+        // erro
+        msgerro := 'erro ao cadastrar endereço';
+        Result := Monta_Json_Erro( 500, false, msgerro );
+        exit;
+      end;
+      // ok
+    end
+    else begin
+      // idendereco = -1 --> endereco invalido --> recadastrar endereço
+
+      // apagar endereço invalido
+      if ApagarEndereco( idpessoa ) then begin
+        // registrar novo endereco
+        idendereco := RegistrarEndereco( idpessoa, cep, dsuf, nmcidade, nmbairro, nmlogradouro, dscomplemento );
+        if idendereco <= 0 then begin
+          // erro
+          msgerro := 'erro ao cadastrar endereço';
+          Result := Monta_Json_Erro( 500, false, msgerro );
+          exit;
+        end;
+        // ok
+      end
+      else begin
+        // erro
+        msgerro := 'erro ao atualizar endereço';
+        Result := Monta_Json_Erro( 500, false, msgerro );
+        exit;
+      end;
+
+    end;
+
+    // endereço OK //
+
+    msgerro := '';
+    Result := Monta_Json_PUT_ok( 200, true );
+    exit;
+
+  end
+  else begin
+    // erro ao alterar dados da pessoa
+    msgerro := 'erro ao alterar dados da pessoa';
+    Result := Monta_Json_Erro( 500, false, msgerro );
+    exit;
+  end;
+end;
+
+function TPessoa.RegistrarEndereco(idpessoa: integer; cep, dsuf, nmcidade, nmbairro, nmlogradouro, dscomplemento: string): integer;
 var Q : TFDQuery;
 begin
   Result := 0; // 0 == erro
@@ -307,7 +852,7 @@ begin
   end;
 end;
 
-function TDMPessoa.RegistrarPessoa(flnatureza: integer; dsdocumento, nmprimeiro, nmsegundo: string ): integer;
+function TPessoa.RegistrarPessoa(flnatureza: integer; dsdocumento, nmprimeiro, nmsegundo: string): integer;
 var Q : TFDQuery;
 begin
   Result := 0; // 0 == erro
@@ -317,18 +862,13 @@ begin
 
     DataModule1.FDConnection1.StartTransaction;
     try
-      Q.ExecSQL('INSERT INTO pessoa(flnatureza,dsdocumento,nmprimeiro,nmsegundo) VALUES '#13
-               + '(' + IntToStr(flnatureza)
-               + ',' + QuotedStr(dsdocumento)
-               + ',' + QuotedStr(nmprimeiro)
-               + ',' + QuotedStr(nmsegundo)
-               + ');');
-      Q.Open('SELECT max(idpessoa) as idpessoa FROM pessoa;');
-      if not Q.Eof then begin
-        Result := Q.FieldByName('idpessoa').AsInteger;
-      end;
+      Result := DataModule1.FDConnection1.ExecSQLScalar('INSERT INTO pessoa(flnatureza,dsdocumento,nmprimeiro,nmsegundo) VALUES'
+                                                       + '(' + IntToStr(flnatureza)
+                                                       + ',' + QuotedStr(dsdocumento)
+                                                       + ',' + QuotedStr(nmprimeiro)
+                                                       + ',' + QuotedStr(nmsegundo)
+                                                       + ') RETURNING idpessoa');   // específico do PostgreSQL !!!!
       DataModule1.FDConnection1.Commit;
-
     except
       DataModule1.FDConnection1.Rollback;
     end;
